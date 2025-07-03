@@ -10,6 +10,8 @@ import ApplicationForm from "@/components/ApplicationForm";
 import ApplicationsStats from "@/components/ApplicationsStats";
 import ApplicationsFilters from "@/components/ApplicationsFilters";
 import ApplicationCard from "@/components/ApplicationCard";
+import ApplicationsTable from "@/components/ApplicationsTable";
+import ApplicationsTimeline from "@/components/ApplicationsTimeline";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -261,7 +263,6 @@ const Applications = () => {
 
   const handleApplicationDelete = (id: number) => {
     console.log(`Suppression de la candidature ${id}`);
-    // Ici on pourrait mettre à jour l'état local pour retirer la candidature
   };
 
   const handleApplicationView = (id: number) => {
@@ -270,7 +271,6 @@ const Applications = () => {
 
   const handleStatusChange = (id: number, newStatus: string) => {
     console.log(`Changement de statut pour la candidature ${id}: ${newStatus}`);
-    // Ici on pourrait mettre à jour l'état local
   };
 
   return (
@@ -440,27 +440,27 @@ const Applications = () => {
           </TabsContent>
 
           <TabsContent value="table" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vue tableau</h3>
-                  <p className="text-gray-600">Cette vue sera disponible prochainement</p>
-                </div>
-              </CardContent>
-            </Card>
+            <ApplicationsTable
+              applications={sortedApplications}
+              selectedApps={selectedApps}
+              onSelect={handleSelectApp}
+              onEdit={handleApplicationEdit}
+              onDelete={handleApplicationDelete}
+              onView={handleApplicationView}
+              onStatusChange={handleStatusChange}
+            />
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vue timeline</h3>
-                  <p className="text-gray-600">Visualisation chronologique des candidatures</p>
-                </div>
-              </CardContent>
-            </Card>
+            <ApplicationsTimeline
+              applications={sortedApplications}
+              selectedApps={selectedApps}
+              onSelect={handleSelectApp}
+              onEdit={handleApplicationEdit}
+              onDelete={handleApplicationDelete}
+              onView={handleApplicationView}
+              onStatusChange={handleStatusChange}
+            />
           </TabsContent>
         </Tabs>
 
