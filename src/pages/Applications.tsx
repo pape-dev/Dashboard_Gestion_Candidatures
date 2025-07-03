@@ -1,24 +1,14 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Building, Calendar, MapPin, Plus, Search, 
-  TrendingUp, Users, CheckCircle, XCircle, AlertCircle,
-  Download, Upload, SortAsc, SortDesc, Filter, Star, Clock
+  Building, Plus, Download, Upload
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import ApplicationForm from "@/components/ApplicationForm";
-import ApplicationActions from "@/components/ApplicationActions";
+import ApplicationsStats from "@/components/ApplicationsStats";
+import ApplicationsFilters from "@/components/ApplicationsFilters";
+import ApplicationCard from "@/components/ApplicationCard";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -190,17 +180,6 @@ const Applications = () => {
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <Star className="h-4 w-4 text-yellow-500 fill-current" />;
-      case "medium":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <Layout>
       <div className="space-y-8">
@@ -231,224 +210,32 @@ const Applications = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-600 text-sm font-medium">Total</p>
-                  <p className="text-3xl font-bold text-blue-800">{stats.total}</p>
-                </div>
-                <Building className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-600 text-sm font-medium">En cours</p>
-                  <p className="text-3xl font-bold text-yellow-800">{stats.pending}</p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-600 text-sm font-medium">Entretiens</p>
-                  <p className="text-3xl font-bold text-green-800">{stats.interview}</p>
-                </div>
-                <Users className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-600 text-sm font-medium">Acceptés</p>
-                  <p className="text-3xl font-bold text-emerald-800">{stats.accepted}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-emerald-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-600 text-sm font-medium">Refusés</p>
-                  <p className="text-3xl font-bold text-red-800">{stats.rejected}</p>
-                </div>
-                <XCircle className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ApplicationsStats stats={stats} />
 
         {/* Filters and Search */}
-        <Card className="bg-white shadow-sm border-0 shadow-xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-1 items-center gap-4">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Rechercher par entreprise, poste ou compétence..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-2 focus:border-blue-500 transition-colors"
-                  />
-                </div>
-                
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-48 border-2 focus:border-blue-500">
-                    <SelectValue placeholder="Filtrer par statut" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white shadow-xl border-0 rounded-xl">
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="En cours">En cours</SelectItem>
-                    <SelectItem value="Entretien">Entretien</SelectItem>
-                    <SelectItem value="En attente">En attente</SelectItem>
-                    <SelectItem value="Accepté">Accepté</SelectItem>
-                    <SelectItem value="Refusé">Refusé</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48 border-2 focus:border-blue-500">
-                    <SelectValue placeholder="Trier par" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white shadow-xl border-0 rounded-xl">
-                    <SelectItem value="date">Date de candidature</SelectItem>
-                    <SelectItem value="company">Entreprise</SelectItem>
-                    <SelectItem value="salary">Salaire</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className="gap-2 border-2 hover:border-blue-500 hover:bg-blue-50"
-                >
-                  {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                </Button>
-              </div>
-
-              {selectedApps.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">{selectedApps.length} sélectionnée(s)</span>
-                  <Button variant="outline" size="sm" className="hover:bg-blue-50 border-blue-300">
-                    Actions groupées
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bulk Actions */}
-        {sortedApplications.length > 0 && (
-          <div className="flex items-center gap-4 py-2">
-            <Checkbox
-              checked={selectedApps.length === sortedApplications.length}
-              onCheckedChange={handleSelectAll}
-              className="border-2"
-            />
-            <span className="text-sm text-gray-600">
-              Sélectionner tout ({sortedApplications.length} candidatures)
-            </span>
-          </div>
-        )}
+        <ApplicationsFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          selectedApps={selectedApps}
+          handleSelectAll={handleSelectAll}
+          totalApplications={sortedApplications.length}
+        />
 
         {/* Applications List */}
         <div className="space-y-4">
           {sortedApplications.map((app) => (
-            <Card key={app.id} className="hover:shadow-2xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-500 bg-white shadow-lg">
-              <CardContent className="p-0">
-                <div className="flex items-start p-6 gap-6">
-                  <Checkbox
-                    checked={selectedApps.includes(app.id)}
-                    onCheckedChange={() => handleSelectApp(app.id)}
-                    className="mt-1 border-2"
-                  />
-                  
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
-                    <img 
-                      src={app.logo} 
-                      alt={app.company}
-                      className="w-full h-full object-cover rounded-2xl"
-                      onError={(e) => {
-                        e.currentTarget.src = '';
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <Building className="h-8 w-8 text-gray-500" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-gray-900">{app.company}</h3>
-                        {getPriorityIcon(app.priority)}
-                        <Badge className={`${app.statusColor} font-medium px-3 py-1`}>
-                          {app.status}
-                        </Badge>
-                      </div>
-                      
-                      <ApplicationActions application={app} />
-                    </div>
-
-                    <h4 className="text-lg font-semibold text-gray-800 mb-2">{app.position}</h4>
-                    <p className="text-gray-600 mb-4 line-clamp-2">{app.description}</p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {app.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs px-3 py-1 bg-gray-50">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span>{app.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        <span>{new Date(app.appliedDate).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-semibold text-green-600">
-                        <TrendingUp className="h-4 w-4" />
-                        <span>{app.salary}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">{app.nextStep}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Users className="h-4 w-4" />
-                          <span>{app.contactPerson}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <ApplicationCard
+              key={app.id}
+              application={app}
+              isSelected={selectedApps.includes(app.id)}
+              onSelect={handleSelectApp}
+            />
           ))}
         </div>
 
