@@ -30,9 +30,21 @@ interface ApplicationCardProps {
   application: Application;
   isSelected: boolean;
   onSelect: (id: number) => void;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
+  onView?: (id: number) => void;
+  onStatusChange?: (id: number, status: string) => void;
 }
 
-const ApplicationCard = ({ application, isSelected, onSelect }: ApplicationCardProps) => {
+const ApplicationCard = ({ 
+  application, 
+  isSelected, 
+  onSelect, 
+  onEdit, 
+  onDelete, 
+  onView, 
+  onStatusChange 
+}: ApplicationCardProps) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case "high":
@@ -80,7 +92,13 @@ const ApplicationCard = ({ application, isSelected, onSelect }: ApplicationCardP
                 </Badge>
               </div>
               
-              <ApplicationActions application={application} />
+              <ApplicationActions 
+                application={application} 
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onView={onView}
+                onStatusChange={onStatusChange}
+              />
             </div>
 
             <h4 className="text-lg font-semibold text-gray-800 mb-2">{application.position}</h4>

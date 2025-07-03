@@ -3,12 +3,16 @@ import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  Building, Plus, Download, Upload
+  Building, Plus, Download, Upload, Filter, Settings,
+  BarChart3, Calendar, Users, Target, TrendingUp
 } from "lucide-react";
 import ApplicationForm from "@/components/ApplicationForm";
 import ApplicationsStats from "@/components/ApplicationsStats";
 import ApplicationsFilters from "@/components/ApplicationsFilters";
 import ApplicationCard from "@/components/ApplicationCard";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +20,8 @@ const Applications = () => {
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedApps, setSelectedApps] = useState<number[]>([]);
+  const [viewMode, setViewMode] = useState<"cards" | "table" | "timeline">("cards");
+  const { toast } = useToast();
   
   const applications = [
     {
@@ -180,26 +186,143 @@ const Applications = () => {
     }
   };
 
+  const handleBulkAction = (action: string) => {
+    toast({
+      title: "Action groupée",
+      description: `Action "${action}" appliquée à ${selectedApps.length} candidature(s)`,
+    });
+    console.log(`Action groupée: ${action} sur les candidatures:`, selectedApps);
+  };
+
+  const handleExportData = () => {
+    const dataToExport = sortedApplications.map(app => ({
+      ...app,
+      exportDate: new Date().toISOString()
+    }));
+    
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `candidatures-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export réussi",
+      description: `${sortedApplications.length} candidature(s) exportée(s)`,
+    });
+  };
+
+  const handleImportData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target?.result as string);
+            console.log('Données importées:', data);
+            toast({
+              title: "Import réussi",
+              description: "Les candidatures ont été importées avec succès",
+            });
+          } catch (error) {
+            toast({
+              title: "Erreur d'import",
+              description: "Le fichier n'est pas valide",
+              variant: "destructive",
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleViewAnalytics = () => {
+    toast({
+      title: "Analyse des données",
+      description: "Ouverture du tableau de bord analytique...",
+    });
+  };
+
+  const handleApplicationEdit = (id: number) => {
+    console.log(`Édition de la candidature ${id}`);
+    toast({
+      title: "Mode édition",
+      description: "Ouverture du formulaire de modification...",
+    });
+  };
+
+  const handleApplicationDelete = (id: number) => {
+    console.log(`Suppression de la candidature ${id}`);
+    // Ici on pourrait mettre à jour l'état local pour retirer la candidature
+  };
+
+  const handleApplicationView = (id: number) => {
+    console.log(`Affichage des détails de la candidature ${id}`);
+  };
+
+  const handleStatusChange = (id: number, newStatus: string) => {
+    console.log(`Changement de statut pour la candidature ${id}: ${newStatus}`);
+    // Ici on pourrait mettre à jour l'état local
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
-        {/* Header Section */}
+        {/* Enhanced Header Section */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
-              Candidatures
+              Gestionnaire de Candidatures
             </h1>
-            <p className="text-lg text-gray-600">Gérez toutes vos candidatures avec efficacité</p>
+            <p className="text-lg text-gray-600">
+              Suivez et gérez toutes vos candidatures professionnelles
+            </p>
+            <div className="flex items-center gap-4 mt-3">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                {applications.length} candidatures au total
+              </Badge>
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                {applications.filter(app => app.status === "En cours" || app.status === "Entretien").length} actives
+              </Badge>
+            </div>
           </div>
+          
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2 hover:bg-gray-50 border-gray-300">
+            <Button 
+              variant="outline" 
+              className="gap-2 hover:bg-blue-50 border-blue-300 text-blue-700"
+              onClick={handleViewAnalytics}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="gap-2 hover:bg-gray-50 border-gray-300"
+              onClick={handleExportData}
+            >
               <Download className="h-4 w-4" />
               Exporter
             </Button>
-            <Button variant="outline" className="gap-2 hover:bg-gray-50 border-gray-300">
+            
+            <Button 
+              variant="outline" 
+              className="gap-2 hover:bg-gray-50 border-gray-300"
+              onClick={handleImportData}
+            >
               <Upload className="h-4 w-4" />
               Importer
             </Button>
+            
             <ApplicationForm>
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 shadow-lg">
                 <Plus className="h-4 w-4" />
@@ -212,7 +335,58 @@ const Applications = () => {
         {/* Statistics Cards */}
         <ApplicationsStats stats={stats} />
 
-        {/* Filters and Search */}
+        {/* Action Toolbar */}
+        {selectedApps.length > 0 && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-blue-800 font-semibold">
+                    {selectedApps.length} candidature(s) sélectionnée(s)
+                  </span>
+                  <div className="h-4 w-px bg-blue-300"></div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-white hover:bg-blue-50 border-blue-300"
+                      onClick={() => handleBulkAction("changer-statut")}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Changer le statut
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-white hover:bg-blue-50 border-blue-300"
+                      onClick={() => handleBulkAction("archiver")}
+                    >
+                      Archiver
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-white hover:bg-red-50 border-red-300 text-red-600"
+                      onClick={() => handleBulkAction("supprimer")}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setSelectedApps([])}
+                  className="text-blue-600 hover:bg-blue-100"
+                >
+                  Désélectionner tout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Enhanced Filters */}
         <ApplicationsFilters
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -227,18 +401,70 @@ const Applications = () => {
           totalApplications={sortedApplications.length}
         />
 
-        {/* Applications List */}
-        <div className="space-y-4">
-          {sortedApplications.map((app) => (
-            <ApplicationCard
-              key={app.id}
-              application={app}
-              isSelected={selectedApps.includes(app.id)}
-              onSelect={handleSelectApp}
-            />
-          ))}
-        </div>
+        {/* View Mode Tabs */}
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as any)} className="w-full">
+          <div className="flex items-center justify-between">
+            <TabsList className="grid w-full max-w-md grid-cols-3 bg-gray-100">
+              <TabsTrigger value="cards" className="gap-2">
+                <Building className="h-4 w-4" />
+                Cartes
+              </TabsTrigger>
+              <TabsTrigger value="table" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Tableau
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                Timeline
+              </TabsTrigger>
+            </TabsList>
+            
+            <div className="text-sm text-gray-600">
+              Affichage de {sortedApplications.length} candidature(s)
+            </div>
+          </div>
 
+          <TabsContent value="cards" className="space-y-4 mt-6">
+            {sortedApplications.map((app) => (
+              <ApplicationCard
+                key={app.id}
+                application={app}
+                isSelected={selectedApps.includes(app.id)}
+                onSelect={handleSelectApp}
+                onEdit={handleApplicationEdit}
+                onDelete={handleApplicationDelete}
+                onView={handleApplicationView}
+                onStatusChange={handleStatusChange}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="table" className="mt-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center py-12">
+                  <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vue tableau</h3>
+                  <p className="text-gray-600">Cette vue sera disponible prochainement</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="mt-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vue timeline</h3>
+                  <p className="text-gray-600">Visualisation chronologique des candidatures</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Empty State */}
         {sortedApplications.length === 0 && (
           <Card className="text-center py-12 shadow-lg">
             <CardContent>
