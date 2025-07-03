@@ -1,26 +1,15 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  Building, Calendar, MapPin, ExternalLink, Plus, Search, 
-  Filter, MoreHorizontal, Edit, Trash2, Eye, Star, Clock,
+  Building, Calendar, MapPin, Plus, Search, 
   TrendingUp, Users, CheckCircle, XCircle, AlertCircle,
-  Download, Upload, Mail, Phone, LinkIcon, SortAsc, SortDesc
+  Download, Upload, SortAsc, SortDesc, Filter, Star, Clock
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -28,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ApplicationForm from "@/components/ApplicationForm";
+import ApplicationActions from "@/components/ApplicationActions";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +26,6 @@ const Applications = () => {
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedApps, setSelectedApps] = useState<number[]>([]);
-  const [viewMode, setViewMode] = useState("grid");
   
   const applications = [
     {
@@ -47,7 +37,7 @@ const Applications = () => {
       appliedDate: "2024-01-15",
       salary: "80-95k €",
       statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-      description: "Développement d'applications web modernes avec React et TypeScript pour l'équipe Google Workspace",
+      description: "Développement d'applications web modernes avec React et TypeScript pour l'équipe Google Workspace. Responsabilités incluant l'architecture frontend, l'optimisation des performances et la collaboration avec les équipes backend.",
       priority: "high",
       contactPerson: "Marie Dubois",
       contactEmail: "marie.dubois@google.com",
@@ -64,7 +54,7 @@ const Applications = () => {
       appliedDate: "2024-01-12",
       salary: "65-75k €",
       statusColor: "bg-green-100 text-green-800 border-green-200",
-      description: "Conception d'interfaces utilisateur innovantes pour les produits Microsoft 365",
+      description: "Conception d'interfaces utilisateur innovantes pour les produits Microsoft 365. Travail sur les guidelines de design, prototypage et tests utilisateurs.",
       priority: "high",
       contactPerson: "Jean Martin",
       contactEmail: "jean.martin@microsoft.com",
@@ -81,7 +71,7 @@ const Applications = () => {
       appliedDate: "2024-01-10",
       salary: "55-65k €",
       statusColor: "bg-red-100 text-red-800 border-red-200",
-      description: "Analyse de données et création de rapports pour optimiser l'expérience utilisateur",
+      description: "Analyse de données et création de rapports pour optimiser l'expérience utilisateur sur la plateforme Airbnb.",
       priority: "medium",
       contactPerson: "Sophie Chen",
       contactEmail: "sophie.chen@airbnb.com",
@@ -98,7 +88,7 @@ const Applications = () => {
       appliedDate: "2024-01-08",
       salary: "90-110k €",
       statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      description: "Gestion de produits fintech et coordination avec les équipes techniques",
+      description: "Gestion de produits fintech et coordination avec les équipes techniques pour développer de nouvelles fonctionnalités de paiement.",
       priority: "high",
       contactPerson: "Alex Johnson",
       contactEmail: "alex.johnson@stripe.com",
@@ -115,7 +105,7 @@ const Applications = () => {
       appliedDate: "2024-01-05",
       salary: "75-90k €",
       statusColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      description: "Infrastructure cloud et déploiement continu pour les services de streaming",
+      description: "Infrastructure cloud et déploiement continu pour les services de streaming Netflix. Gestion des pipelines CI/CD et monitoring.",
       priority: "high",
       contactPerson: "Carlos Rodriguez",
       contactEmail: "carlos.rodriguez@netflix.com",
@@ -132,7 +122,7 @@ const Applications = () => {
       appliedDate: "2024-01-03",
       salary: "70-85k €",
       statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-      description: "Développement full-stack pour améliorer les fonctionnalités de collaboration",
+      description: "Développement full-stack pour améliorer les fonctionnalités de collaboration et d'intégration avec les outils tiers.",
       priority: "medium",
       contactPerson: "Emma Wilson",
       contactEmail: "emma.wilson@slack.com",
@@ -217,28 +207,32 @@ const Applications = () => {
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Candidatures</h1>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
+              Candidatures
+            </h1>
             <p className="text-lg text-gray-600">Gérez toutes vos candidatures avec efficacité</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 hover:bg-gray-50 border-gray-300">
               <Download className="h-4 w-4" />
               Exporter
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 hover:bg-gray-50 border-gray-300">
               <Upload className="h-4 w-4" />
               Importer
             </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
-              <Plus className="h-4 w-4" />
-              Nouvelle candidature
-            </Button>
+            <ApplicationForm>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 shadow-lg">
+                <Plus className="h-4 w-4" />
+                Nouvelle candidature
+              </Button>
+            </ApplicationForm>
           </div>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -250,7 +244,7 @@ const Applications = () => {
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -262,7 +256,7 @@ const Applications = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -274,7 +268,7 @@ const Applications = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -286,7 +280,7 @@ const Applications = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -300,7 +294,7 @@ const Applications = () => {
         </div>
 
         {/* Filters and Search */}
-        <Card className="bg-white shadow-sm">
+        <Card className="bg-white shadow-sm border-0 shadow-xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="flex flex-1 items-center gap-4">
@@ -310,15 +304,15 @@ const Applications = () => {
                     placeholder="Rechercher par entreprise, poste ou compétence..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-2 focus:border-blue-500 transition-colors"
                   />
                 </div>
                 
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 border-2 focus:border-blue-500">
                     <SelectValue placeholder="Filtrer par statut" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white shadow-xl border-0 rounded-xl">
                     <SelectItem value="all">Tous les statuts</SelectItem>
                     <SelectItem value="En cours">En cours</SelectItem>
                     <SelectItem value="Entretien">Entretien</SelectItem>
@@ -329,10 +323,10 @@ const Applications = () => {
                 </Select>
 
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 border-2 focus:border-blue-500">
                     <SelectValue placeholder="Trier par" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white shadow-xl border-0 rounded-xl">
                     <SelectItem value="date">Date de candidature</SelectItem>
                     <SelectItem value="company">Entreprise</SelectItem>
                     <SelectItem value="salary">Salaire</SelectItem>
@@ -343,7 +337,7 @@ const Applications = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className="gap-2"
+                  className="gap-2 border-2 hover:border-blue-500 hover:bg-blue-50"
                 >
                   {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
                 </Button>
@@ -351,14 +345,9 @@ const Applications = () => {
 
               {selectedApps.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">{selectedApps.length} sélectionnée(s)</span>
-                  <Button variant="outline" size="sm">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Relancer
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Supprimer
+                  <span className="text-sm text-gray-600 font-medium">{selectedApps.length} sélectionnée(s)</span>
+                  <Button variant="outline" size="sm" className="hover:bg-blue-50 border-blue-300">
+                    Actions groupées
                   </Button>
                 </div>
               )}
@@ -372,6 +361,7 @@ const Applications = () => {
             <Checkbox
               checked={selectedApps.length === sortedApplications.length}
               onCheckedChange={handleSelectAll}
+              className="border-2"
             />
             <span className="text-sm text-gray-600">
               Sélectionner tout ({sortedApplications.length} candidatures)
@@ -382,19 +372,20 @@ const Applications = () => {
         {/* Applications List */}
         <div className="space-y-4">
           {sortedApplications.map((app) => (
-            <Card key={app.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-500 bg-white">
+            <Card key={app.id} className="hover:shadow-2xl transition-all duration-300 border-l-4 border-l-transparent hover:border-l-blue-500 bg-white shadow-lg">
               <CardContent className="p-0">
                 <div className="flex items-start p-6 gap-6">
                   <Checkbox
                     checked={selectedApps.includes(app.id)}
                     onCheckedChange={() => handleSelectApp(app.id)}
+                    className="mt-1 border-2"
                   />
                   
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
                     <img 
                       src={app.logo} 
                       alt={app.company}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover rounded-2xl"
                       onError={(e) => {
                         e.currentTarget.src = '';
                         e.currentTarget.style.display = 'none';
@@ -408,42 +399,12 @@ const Applications = () => {
                       <div className="flex items-center gap-3">
                         <h3 className="text-xl font-bold text-gray-900">{app.company}</h3>
                         {getPriorityIcon(app.priority)}
-                        <Badge className={`${app.statusColor} font-medium`}>
+                        <Badge className={`${app.statusColor} font-medium px-3 py-1`}>
                           {app.status}
                         </Badge>
                       </div>
                       
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            Voir les détails
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Edit className="h-4 w-4" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Mail className="h-4 w-4" />
-                            Envoyer un email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <ExternalLink className="h-4 w-4" />
-                            Voir l'offre
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600 gap-2">
-                            <Trash2 className="h-4 w-4" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ApplicationActions application={app} />
                     </div>
 
                     <h4 className="text-lg font-semibold text-gray-800 mb-2">{app.position}</h4>
@@ -451,7 +412,7 @@ const Applications = () => {
                     
                     <div className="flex flex-wrap gap-2 mb-4">
                       {app.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="outline" className="text-xs px-3 py-1 bg-gray-50">
                           {tag}
                         </Badge>
                       ))}
@@ -482,28 +443,6 @@ const Applications = () => {
                           <Users className="h-4 w-4" />
                           <span>{app.contactPerson}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <LinkIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Eye className="h-4 w-4" />
-                          Détails
-                        </Button>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 gap-2">
-                          <Edit className="h-4 w-4" />
-                          Modifier
-                        </Button>
                       </div>
                     </div>
                   </div>
@@ -514,7 +453,7 @@ const Applications = () => {
         </div>
 
         {sortedApplications.length === 0 && (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 shadow-lg">
             <CardContent>
               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune candidature trouvée</h3>
@@ -524,10 +463,12 @@ const Applications = () => {
                   : "Commencez par ajouter votre première candidature."
                 }
               </p>
-              <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
-                <Plus className="h-4 w-4" />
-                Ajouter une candidature
-              </Button>
+              <ApplicationForm>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Ajouter une candidature
+                </Button>
+              </ApplicationForm>
             </CardContent>
           </Card>
         )}
