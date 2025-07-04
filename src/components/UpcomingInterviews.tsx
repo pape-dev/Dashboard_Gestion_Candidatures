@@ -2,7 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Video } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, Clock, MapPin, Video, Phone, Star, ArrowRight, Zap } from "lucide-react";
 
 const UpcomingInterviews = () => {
   const interviews = [
@@ -15,7 +16,12 @@ const UpcomingInterviews = () => {
       type: "Présentiel",
       location: "Paris, France",
       interviewer: "Marie Dupont",
-      icon: MapPin
+      interviewerAvatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=64&h=64&fit=crop&crop=center",
+      icon: MapPin,
+      priority: "high",
+      companyLogo: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=64&h=64&fit=crop&crop=center",
+      status: "confirmé",
+      duration: "1h"
     },
     {
       id: 2,
@@ -26,7 +32,12 @@ const UpcomingInterviews = () => {
       type: "Visioconférence",
       location: "Zoom",
       interviewer: "Pierre Martin",
-      icon: Video
+      interviewerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=center",
+      icon: Video,
+      priority: "medium",
+      companyLogo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64&h=64&fit=crop&crop=center",
+      status: "en attente",
+      duration: "45min"
     },
     {
       id: 3,
@@ -37,80 +48,170 @@ const UpcomingInterviews = () => {
       type: "Téléphone",
       location: "Appel téléphonique",
       interviewer: "Sophie Bernard",
-      icon: Clock
+      interviewerAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=center",
+      icon: Phone,
+      priority: "high",
+      companyLogo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=64&h=64&fit=crop&crop=center",
+      status: "confirmé",
+      duration: "30min"
     }
   ];
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "Présentiel":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300";
       case "Visioconférence":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900 dark:text-emerald-300";
       case "Téléphone":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900 dark:text-slate-300";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "border-l-red-500 bg-red-50 dark:bg-red-950";
+      case "medium":
+        return "border-l-amber-500 bg-amber-50 dark:bg-amber-950";
+      default:
+        return "border-l-slate-500 bg-slate-50 dark:bg-slate-950";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmé":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900 dark:text-emerald-300";
+      case "en attente":
+        return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900 dark:text-amber-300";
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900 dark:text-slate-300";
     }
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-green-600" />
-          Entretiens à venir
-        </CardTitle>
-        <Button variant="outline" size="sm">
-          Calendrier
-        </Button>
+    <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3 text-emerald-700 dark:text-emerald-300">
+            <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-blue-600">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            Entretiens à venir
+            <Badge className="bg-emerald-200 text-emerald-800 border-emerald-300 dark:bg-emerald-800 dark:text-emerald-200">
+              {interviews.length} entretiens
+            </Badge>
+          </CardTitle>
+          <Button variant="outline" size="sm" className="border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300">
+            <Calendar className="h-4 w-4 mr-2" />
+            Calendrier
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {interviews.map((interview) => (
-            <div key={interview.id} className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-1">
-                    {interview.company}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-2">
+      <CardContent className="space-y-4">
+        {interviews.map((interview) => (
+          <div key={interview.id} className={`p-5 border-l-4 ${getPriorityColor(interview.priority)} rounded-xl backdrop-blur-sm bg-white/60 dark:bg-slate-800/60 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all duration-300 group hover:shadow-lg`}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start gap-4">
+                {/* Company Logo */}
+                <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-slate-700 shadow-lg">
+                  <AvatarImage src={interview.companyLogo} alt={interview.company} />
+                  <AvatarFallback className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white font-bold">
+                    {interview.company[0]}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <h4 className="font-bold text-lg text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                      {interview.company}
+                    </h4>
+                    <Badge className={getStatusColor(interview.status)}>
+                      {interview.status}
+                    </Badge>
+                    {interview.priority === "high" && (
+                      <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                     {interview.position}
                   </p>
-                  <Badge className={getTypeColor(interview.type)}>
+                  <Badge className={`text-xs ${getTypeColor(interview.type)}`}>
+                    <interview.icon className="h-3 w-3 mr-1" />
                     {interview.type}
                   </Badge>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {new Date(interview.date).toLocaleDateString('fr-FR')}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {interview.time}
-                  </div>
-                </div>
               </div>
               
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <interview.icon className="h-4 w-4" />
-                  {interview.location}
+              <div className="text-right space-y-1">
+                <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  {new Date(interview.date).toLocaleDateString("fr-FR", { 
+                    weekday: "short", 
+                    day: "numeric", 
+                    month: "short" 
+                  })}
                 </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                  {interview.time}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {interview.duration}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-600">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={interview.interviewerAvatar} alt={interview.interviewer} />
+                  <AvatarFallback className="text-xs bg-slate-200 dark:bg-slate-700">
+                    {interview.interviewer.split(" ").map(n => n[0]).join("")}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
-                  avec {interview.interviewer}
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {interview.interviewer}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <interview.icon className="h-3 w-3" />
+                    {interview.location}
+                  </div>
                 </div>
               </div>
               
-              <div className="flex gap-2 mt-3">
-                <Button size="sm" variant="outline">
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300">
+                  <Zap className="h-3 w-3 mr-1" />
                   Préparer
                 </Button>
-                <Button size="sm" variant="outline">
+                <Button size="sm" className="text-xs bg-gradient-to-r from-emerald-500 to-blue-600 text-white hover:from-emerald-600 hover:to-blue-700">
                   Rejoindre
+                  <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+        
+        {/* Quick stats footer */}
+        <div className="mt-6 pt-4 border-t border-emerald-200 dark:border-emerald-700">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">3</div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-400">Cette semaine</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-blue-600">2</div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-400">Confirmés</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-amber-600">90%</div>
+              <div className="text-xs text-emerald-600 dark:text-emerald-400">Taux de présence</div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
