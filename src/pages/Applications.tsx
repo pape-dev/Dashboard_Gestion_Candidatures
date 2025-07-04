@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Building, Plus, Download, Upload, Filter, Settings,
-  BarChart3, Calendar, Users, Target, TrendingUp
+  BarChart3, Calendar, Users, Target, TrendingUp, Sparkles,
+  FileText, Zap, Globe, Brain
 } from "lucide-react";
 import ApplicationForm from "@/components/ApplicationForm";
 import ApplicationsStats from "@/components/ApplicationsStats";
@@ -12,6 +13,8 @@ import ApplicationsFilters from "@/components/ApplicationsFilters";
 import ApplicationCard from "@/components/ApplicationCard";
 import ApplicationsTable from "@/components/ApplicationsTable";
 import ApplicationsTimeline from "@/components/ApplicationsTimeline";
+import ExportImportModal from "@/components/ExportImportModal";
+import ApplicationAnalytics from "@/components/ApplicationAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -273,62 +276,98 @@ const Applications = () => {
     console.log(`Changement de statut pour la candidature ${id}: ${newStatus}`);
   };
 
+  const handleImportSuccess = (importedData: any[]) => {
+    console.log("Données importées:", importedData);
+    // Ici vous pourriez ajouter la logique pour fusionner les données
+  };
+
   return (
     <Layout>
       <div className="space-y-8">
         {/* Enhanced Header Section */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
-              Gestionnaire de Candidatures
-            </h1>
-            <p className="text-lg text-gray-600">
-              Suivez et gérez toutes vos candidatures professionnelles
-            </p>
-            <div className="flex items-center gap-4 mt-3">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                {applications.length} candidatures au total
-              </Badge>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                {applications.filter(app => app.status === "En cours" || app.status === "Entretien").length} actives
-              </Badge>
-            </div>
-          </div>
+        <div className="relative">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 rounded-2xl -z-10" />
           
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              className="gap-2 hover:bg-blue-50 border-blue-300 text-blue-700"
-              onClick={handleViewAnalytics}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </Button>
+          <div className="flex items-center justify-between p-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+                  <Building className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+                    Gestionnaire de Candidatures
+                  </h1>
+                  <p className="text-lg text-slate-600 dark:text-slate-400 mt-1">
+                    Gérez intelligemment vos opportunités professionnelles
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 px-4 py-2">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {applications.length} candidatures
+                </Badge>
+                <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 px-4 py-2">
+                  <Target className="h-4 w-4 mr-2" />
+                  {applications.filter(app => app.status === "En cours" || app.status === "Entretien").length} actives
+                </Badge>
+                <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 px-4 py-2">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  {Math.round((applications.filter(app => app.status === "Entretien" || app.status === "Accepté").length / applications.length) * 100)}% taux de réponse
+                </Badge>
+              </div>
+            </div>
             
-            <Button 
-              variant="outline" 
-              className="gap-2 hover:bg-gray-50 border-gray-300"
-              onClick={handleExportData}
-            >
-              <Download className="h-4 w-4" />
-              Exporter
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="gap-2 hover:bg-gray-50 border-gray-300"
-              onClick={handleImportData}
-            >
-              <Upload className="h-4 w-4" />
-              Importer
-            </Button>
-            
-            <ApplicationForm>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 shadow-lg">
-                <Plus className="h-4 w-4" />
-                Nouvelle candidature
-              </Button>
-            </ApplicationForm>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <ApplicationAnalytics 
+                  applications={applications}
+                  trigger={
+                    <Button 
+                      variant="outline" 
+                      className="gap-2 hover:bg-blue-50 border-blue-300 text-blue-700 shadow-sm"
+                    >
+                      <Brain className="h-4 w-4" />
+                      Analytics IA
+                    </Button>
+                  }
+                />
+                
+                <ExportImportModal 
+                  applications={sortedApplications}
+                  onImport={handleImportSuccess}
+                  trigger={
+                    <Button 
+                      variant="outline" 
+                      className="gap-2 hover:bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Export / Import
+                    </Button>
+                  }
+                />
+                
+                <Button 
+                  variant="outline" 
+                  className="gap-2 hover:bg-purple-50 border-purple-300 text-purple-700 shadow-sm"
+                  onClick={() => window.open("https://www.linkedin.com/jobs", "_blank")}
+                >
+                  <Globe className="h-4 w-4" />
+                  Découvrir jobs
+                </Button>
+              </div>
+              
+              <ApplicationForm>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 shadow-xl hover:shadow-2xl transition-all duration-300 px-6 py-3">
+                  <Plus className="h-5 w-5" />
+                  Nouvelle candidature
+                  <Sparkles className="h-4 w-4 ml-2" />
+                </Button>
+              </ApplicationForm>
+            </div>
           </div>
         </div>
 

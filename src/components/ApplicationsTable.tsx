@@ -170,39 +170,13 @@ const ApplicationsTable = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1 justify-center">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      onClick={() => onView?.(app.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                      onClick={() => onEdit?.(app.id)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                      onClick={() => window.open(`mailto:${app.contactEmail}`)}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <ApplicationActions 
-                      application={app} 
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onView={onView}
-                      onStatusChange={onStatusChange}
-                    />
-                  </div>
+                  <ApplicationActions 
+                    application={app} 
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onView={onView}
+                    onStatusChange={onStatusChange}
+                  />
                 </TableCell>
               </TableRow>
             ))}
