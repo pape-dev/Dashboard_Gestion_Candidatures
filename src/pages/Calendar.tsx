@@ -13,7 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import InterviewActions from "@/components/InterviewActions";
-import useApplicationsData from "@/hooks/useApplicationsData";
+import InterviewForm from "@/components/InterviewForm";
+import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Calendar = () => {
@@ -21,7 +22,7 @@ const Calendar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const { interviews, applications } = useApplicationsData();
+  const { interviews, applications, updateInterview, deleteInterview } = useAppContext();
   const { toast } = useToast();
   
   const filteredInterviews = interviews.filter(interview => {
@@ -102,6 +103,7 @@ const Calendar = () => {
   };
 
   const handleInterviewDelete = (id: number) => {
+    deleteInterview(id);
     toast({
       title: "Suppression d'entretien",
       description: `Entretien ${id} supprimé avec succès`,
@@ -109,6 +111,7 @@ const Calendar = () => {
   };
 
   const handleStatusChange = (id: number, status: string) => {
+    updateInterview(id, { status });
     toast({
       title: "Statut modifié",
       description: `Statut de l'entretien ${id} changé en "${status}"`,
@@ -180,10 +183,7 @@ const Calendar = () => {
               Exporter
             </Button>
             
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 shadow-lg">
-              <Plus className="h-4 w-4" />
-              Nouvel entretien
-            </Button>
+            <InterviewForm />
           </div>
         </div>
 
