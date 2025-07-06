@@ -14,8 +14,12 @@ import UpcomingInterviews from "@/components/UpcomingInterviews";
 import StatsCards from "@/components/StatsCards";
 import DashboardInsights from "@/components/DashboardInsights";
 import WeeklyActivity from "@/components/WeeklyActivity";
+import { useAppContext } from "@/contexts/AppContext";
 
 const Index = () => {
+  // Utilisation du contexte global
+  const { applications, interviews, getStatistics } = useAppContext();
+  const stats = getStatistics();
   // Données de démonstration pour les graphiques
   const applicationData = [
     { month: "Jan", sent: 15, responses: 3, interviews: 1, efficiency: 20 },

@@ -18,6 +18,7 @@ import ApplicationAnalytics from "@/components/ApplicationAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/contexts/AppContext";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,110 +29,13 @@ const Applications = () => {
   const [viewMode, setViewMode] = useState<"cards" | "table" | "timeline">("cards");
   const { toast } = useToast();
   
-  const applications = [
-    {
-      id: 1,
-      company: "Google",
-      position: "Senior Frontend Developer",
-      location: "Paris, France",
-      status: "En cours",
-      appliedDate: "2024-01-15",
-      salary: "80-95k €",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-      description: "Développement d'applications web modernes avec React et TypeScript pour l'équipe Google Workspace. Responsabilités incluant l'architecture frontend, l'optimisation des performances et la collaboration avec les équipes backend.",
-      priority: "high",
-      contactPerson: "Marie Dubois",
-      contactEmail: "marie.dubois@google.com",
-      nextStep: "Entretien technique prévu",
-      tags: ["React", "TypeScript", "Remote", "Tech Lead"],
-      logo: "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=64&h=64&fit=crop&crop=center"
-    },
-    {
-      id: 2,
-      company: "Microsoft",
-      position: "UX/UI Designer Senior",
-      location: "Lyon, France",
-      status: "Entretien",
-      appliedDate: "2024-01-12",
-      salary: "65-75k €",
-      statusColor: "bg-green-100 text-green-800 border-green-200",
-      description: "Conception d'interfaces utilisateur innovantes pour les produits Microsoft 365. Travail sur les guidelines de design, prototypage et tests utilisateurs.",
-      priority: "high",
-      contactPerson: "Jean Martin",
-      contactEmail: "jean.martin@microsoft.com",
-      nextStep: "2ème entretien - 25 Jan",
-      tags: ["Figma", "Design System", "UX Research"],
-      logo: "https://images.unsplash.com/photo-1633409361618-c73427e4e206?w=64&h=64&fit=crop&crop=center"
-    },
-    {
-      id: 3,
-      company: "Airbnb",
-      position: "Data Analyst",
-      location: "Marseille, France",
-      status: "Refusé",
-      appliedDate: "2024-01-10",
-      salary: "55-65k €",
-      statusColor: "bg-red-100 text-red-800 border-red-200",
-      description: "Analyse de données et création de rapports pour optimiser l'expérience utilisateur sur la plateforme Airbnb.",
-      priority: "medium",
-      contactPerson: "Sophie Chen",
-      contactEmail: "sophie.chen@airbnb.com",
-      nextStep: "Candidature fermée",
-      tags: ["Python", "SQL", "Analytics", "Remote"],
-      logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64&h=64&fit=crop&crop=center"
-    },
-    {
-      id: 4,
-      company: "Stripe",
-      position: "Product Manager",
-      location: "Remote",
-      status: "En attente",
-      appliedDate: "2024-01-08",
-      salary: "90-110k €",
-      statusColor: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      description: "Gestion de produits fintech et coordination avec les équipes techniques pour développer de nouvelles fonctionnalités de paiement.",
-      priority: "high",
-      contactPerson: "Alex Johnson",
-      contactEmail: "alex.johnson@stripe.com",
-      nextStep: "Réponse attendue sous 1 semaine",
-      tags: ["Product", "Fintech", "Remote", "Strategy"],
-      logo: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=64&h=64&fit=crop&crop=center"
-    },
-    {
-      id: 5,
-      company: "Netflix",
-      position: "DevOps Engineer",
-      location: "Toulouse, France",
-      status: "Accepté",
-      appliedDate: "2024-01-05",
-      salary: "75-90k €",
-      statusColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      description: "Infrastructure cloud et déploiement continu pour les services de streaming Netflix. Gestion des pipelines CI/CD et monitoring.",
-      priority: "high",
-      contactPerson: "Carlos Rodriguez",
-      contactEmail: "carlos.rodriguez@netflix.com",
-      nextStep: "Signature du contrat",
-      tags: ["AWS", "Docker", "Kubernetes", "CI/CD"],
-      logo: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=64&h=64&fit=crop&crop=center"
-    },
-    {
-      id: 6,
-      company: "Slack",
-      position: "Full Stack Developer",
-      location: "Nice, France",
-      status: "En cours",
-      appliedDate: "2024-01-03",
-      salary: "70-85k €",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-      description: "Développement full-stack pour améliorer les fonctionnalités de collaboration et d'intégration avec les outils tiers.",
-      priority: "medium",
-      contactPerson: "Emma Wilson",
-      contactEmail: "emma.wilson@slack.com",
-      nextStep: "Test technique à faire",
-      tags: ["React", "Node.js", "GraphQL", "Remote"],
-      logo: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=64&h=64&fit=crop&crop=center"
-    }
-  ];
+  // Utilisation du contexte global
+  const { 
+    applications, 
+    updateApplication, 
+    deleteApplication,
+    addApplication
+  } = useAppContext();
 
   const stats = {
     total: applications.length,
@@ -265,7 +169,11 @@ const Applications = () => {
   };
 
   const handleApplicationDelete = (id: number) => {
-    console.log(`Suppression de la candidature ${id}`);
+    deleteApplication(id);
+    toast({
+      title: "Candidature supprimée",
+      description: "La candidature a été supprimée avec succès.",
+    });
   };
 
   const handleApplicationView = (id: number) => {
@@ -273,12 +181,24 @@ const Applications = () => {
   };
 
   const handleStatusChange = (id: number, newStatus: string) => {
-    console.log(`Changement de statut pour la candidature ${id}: ${newStatus}`);
+    updateApplication(id, { status: newStatus });
+    toast({
+      title: "Statut mis à jour",
+      description: `Le statut a été changé vers "${newStatus}".`,
+    });
   };
 
   const handleImportSuccess = (importedData: any[]) => {
-    console.log("Données importées:", importedData);
-    // Ici vous pourriez ajouter la logique pour fusionner les données
+    // Ajouter les nouvelles candidatures importées
+    importedData.forEach((appData) => {
+      const { id, ...applicationWithoutId } = appData;
+      addApplication(applicationWithoutId);
+    });
+    
+    toast({
+      title: "Import réussi",
+      description: `${importedData.length} candidature(s) importée(s) avec succès.`,
+    });
   };
 
   return (
