@@ -61,18 +61,66 @@ const InterviewActions = ({
   };
 
   const handleReschedule = () => {
-    toast({
-      title: "Reprogrammer l'entretien",
-      description: "Ouverture du calendrier de reprogrammation...",
-    });
+    // Créer une nouvelle date/heure par défaut (demain à la même heure)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const newDate = tomorrow.toISOString().split('T')[0];
+    
+    // Demander confirmation avant de reprogrammer
+    if (window.confirm(`Voulez-vous reprogrammer l'entretien avec ${interview.company} ?\n\nActuel: ${new Date(interview.date).toLocaleDateString('fr-FR')} à ${interview.time}\nProposé: ${tomorrow.toLocaleDateString('fr-FR')} à ${interview.time}`)) {
+      // Mettre à jour l'entretien avec la nouvelle date
+      onStatusChange?.(interview.id, "à confirmer");
+      
+      toast({
+        title: "📅 Entretien reprogrammé",
+        description: `L'entretien avec ${interview.company} a été reprogrammé pour le ${tomorrow.toLocaleDateString('fr-FR')}`,
+      });
+      
+      // Optionnel : Ouvrir un formulaire de modification pour ajuster les détails
+      setTimeout(() => {
+        if (window.confirm("Voulez-vous modifier d'autres détails de l'entretien ?")) {
+          onEdit?.(interview.id);
+        }
+      }, 1000);
+    }
   };
 
   const handleCopyDetails = () => {
-    const details = `Entretien ${interview.company}\nPoste: ${interview.position}\nDate: ${new Date(interview.date).toLocaleDateString('fr-FR')}\nHeure: ${interview.time}\nType: ${interview.type}\nLieu: ${interview.location}\nIntervieweur: ${interview.interviewer}`;
-    navigator.clipboard.writeText(details);
-    toast({
-      title: "Détails copiés",
-      description: "Les informations de l'entretien ont été copiées",
+    const details = `🗓️ DÉTAILS DE L'ENTRETIEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📍 ENTREPRISE : ${interview.company}
+💼 POSTE : ${interview.position}
+📅 DATE : ${new Date(interview.date).toLocaleDateString('fr-FR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}
+⏰ HEURE : ${interview.time}
+⏱️ DURÉE : ${interview.duration}
+🏢 TYPE : ${interview.type}
+📍 LIEU : ${interview.location}
+👤 INTERVIEWEUR : ${interview.interviewer}
+📊 STATUT : ${interview.status.toUpperCase()}
+
+${interview.meetingLink ? `🔗 LIEN DE RÉUNION : ${interview.meetingLink}` : ''}
+${interview.notes ? `📝 NOTES : ${interview.notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Généré le ${new Date().toLocaleString('fr-FR')}`;
+    
+    navigator.clipboard.writeText(details).then(() => {
+      toast({
+        title: "✅ Détails copiés !",
+        description: "Toutes les informations de l'entretien ont été copiées dans le presse-papiers",
+      });
+    }).catch(() => {
+      toast({
+        title: "❌ Erreur de copie",
+        description: "Impossible de copier les détails. Veuillez réessayer.",
+        variant: "destructive",
+      });
     });
   };
 

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import InterviewActions from "@/components/InterviewActions";
 import InterviewForm from "@/components/InterviewForm";
+import InterviewEditForm from "@/components/InterviewEditForm";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,8 @@ const Calendar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [editFormOpen, setEditFormOpen] = useState(false);
+  const [editingInterview, setEditingInterview] = useState<any>(null);
   const { interviews, applications, updateInterview, deleteInterview } = useAppContext();
   const { toast } = useToast();
   
@@ -96,10 +99,11 @@ const Calendar = () => {
   };
 
   const handleInterviewEdit = (id: number) => {
-    toast({
-      title: "Modification d'entretien",
-      description: `Ouverture du formulaire de modification pour l'entretien ${id}`,
-    });
+    const interviewToEdit = interviews.find(i => i.id === id);
+    if (interviewToEdit) {
+      setEditingInterview(interviewToEdit);
+      setEditFormOpen(true);
+    }
   };
 
   const handleInterviewDelete = (id: number) => {
@@ -723,6 +727,13 @@ END:VCALENDAR`;
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Formulaire de modification */}
+        <InterviewEditForm
+          interview={editingInterview}
+          open={editFormOpen}
+          onOpenChange={setEditFormOpen}
+        />
       </div>
     </Layout>
   );
