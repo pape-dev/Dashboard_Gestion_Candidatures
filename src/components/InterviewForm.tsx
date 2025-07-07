@@ -14,10 +14,7 @@ interface InterviewFormProps {
 }
 
 const InterviewForm = ({ trigger }: InterviewFormProps) => {
-  console.log("InterviewForm component loaded");
   const [open, setOpen] = useState(false);
-  
-  console.log("InterviewForm open state:", open);
   const [formData, setFormData] = useState({
     applicationId: "",
     company: "",
@@ -94,6 +91,17 @@ const InterviewForm = ({ trigger }: InterviewFormProps) => {
   };
 
   const handleApplicationSelect = (appId: string) => {
+    if (appId === "none") {
+      setFormData(prev => ({
+        ...prev,
+        applicationId: "",
+        company: "",
+        position: "",
+        interviewer: ""
+      }));
+      return;
+    }
+    
     const selectedApp = applications.find(app => app.id.toString() === appId);
     if (selectedApp) {
       setFormData(prev => ({
@@ -103,19 +111,9 @@ const InterviewForm = ({ trigger }: InterviewFormProps) => {
         position: selectedApp.position,
         interviewer: selectedApp.contactPerson
       }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        applicationId: "",
-        company: "",
-        position: "",
-        interviewer: ""
-      }));
     }
   };
 
-  console.log("InterviewForm rendering...");
-  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -144,7 +142,7 @@ const InterviewForm = ({ trigger }: InterviewFormProps) => {
                 <SelectValue placeholder="Choisir une candidature existante" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune (entretien indépendant)</SelectItem>
+                <SelectItem value="none">Aucune (entretien indépendant)</SelectItem>
                 {applications.map((app) => (
                   <SelectItem key={app.id} value={app.id.toString()}>
                     {app.company} - {app.position}
