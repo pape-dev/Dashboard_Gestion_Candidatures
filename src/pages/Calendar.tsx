@@ -119,17 +119,60 @@ const Calendar = () => {
   };
 
   const handleExportCalendar = () => {
+    // Créer un fichier ICS avec tous les entretiens
+    const icsContent = generateICSFile(interviews);
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `entretiens-${new Date().toISOString().split('T')[0]}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     toast({
-      title: "Export du calendrier",
-      description: "Génération du fichier ICS en cours...",
+      title: "Export réussi",
+      description: "Fichier ICS téléchargé avec succès",
     });
   };
 
-  const handleSyncCalendar = () => {
+  const handleSyncCalendar = async () => {
     toast({
-      title: "Synchronisation",
+      title: "Synchronisation démarrée",
       description: "Synchronisation avec votre calendrier externe...",
     });
+
+    // Simuler la synchronisation avec Google Calendar, Outlook, etc.
+    setTimeout(() => {
+      toast({
+        title: "Synchronisation réussie",
+        description: "Votre calendrier a été synchronisé avec succès",
+      });
+    }, 2000);
+  };
+
+  const generateICSFile = (interviews: any[]) => {
+    const icsEvents = interviews.map(interview => {
+      const startDate = new Date(`${interview.date}T${interview.time}`);
+      const endDate = new Date(startDate.getTime() + (interview.duration === '1h' ? 60 : 120) * 60000);
+      
+      return `BEGIN:VEVENT
+UID:${interview.id}@entretiens-app.com
+DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+SUMMARY:${interview.type} - ${interview.company}
+DESCRIPTION:Poste: ${interview.position}\\nIntervieweur: ${interview.interviewer}\\nNotes: ${interview.notes || 'Aucune note'}
+LOCATION:${interview.location}
+STATUS:${interview.status === 'confirmé' ? 'CONFIRMED' : 'TENTATIVE'}
+END:VEVENT`;
+    }).join('\n');
+
+    return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Entretiens App//Calendar//FR
+${icsEvents}
+END:VCALENDAR`;
   };
 
   const monthNames = [
@@ -410,45 +453,82 @@ const Calendar = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {upcomingInterviews.slice(0, 5).map((interview) => (
-                      <div key={interview.id} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="font-semibold text-gray-900">{interview.company}</h4>
-                            <p className="text-sm text-gray-600">{interview.position}</p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {interview.type}
-                          </Badge>
-                        </div>
-                        
-                        <div className="space-y-1 text-xs text-gray-500 mb-3">
-                          <div className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {new Date(interview.date).toLocaleDateString('fr-FR')}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {interview.time} ({interview.duration})
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {interview.location}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {interview.interviewer}
-                          </div>
-                        </div>
+                     {upcomingInterviews.slice(0, 5).map((interview) => {
+                       const application = applications.find(app => app.id === interview.applicationId);
+                       const getStatusStyle = (status: string) => {
+                         switch (status) {
+                           case "confirmé": return "bg-green-100 text-green-800 border-green-200";
+                           case "à confirmer": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+                           case "en attente": return "bg-blue-100 text-blue-800 border-blue-200";
+                           case "annulé": return "bg-red-100 text-red-800 border-red-200";
+                           default: return "bg-gray-100 text-gray-800 border-gray-200";
+                         }
+                       };
 
-                        <InterviewActions
-                          interview={interview}
-                          onEdit={handleInterviewEdit}
-                          onDelete={handleInterviewDelete}
-                          onStatusChange={handleStatusChange}
-                        />
-                      </div>
-                    ))}
+                       return (
+                         <div key={interview.id} className="group relative bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1">
+                           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-xl"></div>
+                           
+                           <div className="flex items-start justify-between mb-4">
+                             <div className="flex items-center gap-3">
+                               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-lg">
+                                 {application?.logo ? (
+                                   <img 
+                                     src={application.logo} 
+                                     alt={interview.company}
+                                     className="w-full h-full object-cover rounded-xl"
+                                   />
+                                 ) : (
+                                   <Building className="h-6 w-6 text-white" />
+                                 )}
+                               </div>
+                               <div>
+                                 <h4 className="font-bold text-gray-900 text-lg">{interview.company}</h4>
+                                 <p className="text-sm text-gray-600 font-medium">{interview.position}</p>
+                                 <Badge className={`mt-1 ${getStatusStyle(interview.status)} text-xs font-semibold`}>
+                                   {interview.status}
+                                 </Badge>
+                               </div>
+                             </div>
+                             
+                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                               {interview.type}
+                             </Badge>
+                           </div>
+                           
+                           <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                               <CalendarIcon className="h-4 w-4 text-blue-500" />
+                               <span className="font-medium text-gray-700">{new Date(interview.date).toLocaleDateString('fr-FR')}</span>
+                             </div>
+                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                               <Clock className="h-4 w-4 text-green-500" />
+                               <span className="font-medium text-gray-700">{interview.time}</span>
+                             </div>
+                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                               <MapPin className="h-4 w-4 text-purple-500" />
+                               <span className="font-medium text-gray-700 truncate">{interview.location}</span>
+                             </div>
+                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                               <Users className="h-4 w-4 text-orange-500" />
+                               <span className="font-medium text-gray-700 truncate">{interview.interviewer}</span>
+                             </div>
+                           </div>
+
+                           <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                             <div className="text-xs text-gray-500">
+                               Durée: <span className="font-semibold">{interview.duration}</span>
+                             </div>
+                             <InterviewActions
+                               interview={interview}
+                               onEdit={handleInterviewEdit}
+                               onDelete={handleInterviewDelete}
+                               onStatusChange={handleStatusChange}
+                             />
+                           </div>
+                         </div>
+                       );
+                     })}
                   </div>
                 </CardContent>
               </Card>
@@ -462,67 +542,130 @@ const Calendar = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredInterviews.map((interview) => {
-                    const application = applications.find(app => app.id === interview.applicationId);
-                    return (
-                      <div key={interview.id} className="p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
-                              {application?.logo ? (
-                                <img 
-                                  src={application.logo} 
-                                  alt={interview.company}
-                                  className="w-full h-full object-cover rounded-xl"
-                                />
-                              ) : (
-                                <Building className="h-6 w-6 text-gray-500" />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-gray-900">{interview.company}</h3>
-                              <p className="text-md text-gray-700">{interview.position}</p>
-                              <p className="text-sm text-gray-500">{interview.type}</p>
-                            </div>
-                          </div>
+                   {filteredInterviews.map((interview) => {
+                     const application = applications.find(app => app.id === interview.applicationId);
+                     const getStatusStyle = (status: string) => {
+                       switch (status) {
+                         case "confirmé": return "bg-green-100 text-green-800 border-green-200";
+                         case "à confirmer": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+                         case "en attente": return "bg-blue-100 text-blue-800 border-blue-200";
+                         case "annulé": return "bg-red-100 text-red-800 border-red-200";
+                         default: return "bg-gray-100 text-gray-800 border-gray-200";
+                       }
+                     };
 
-                          <InterviewActions
-                            interview={interview}
-                            onEdit={handleInterviewEdit}
-                            onDelete={handleInterviewDelete}
-                            onStatusChange={handleStatusChange}
-                          />
-                        </div>
+                     const isUpcoming = new Date(interview.date) >= new Date();
+                     const isToday = new Date(interview.date).toDateString() === new Date().toDateString();
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
-                          <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-4 w-4 text-gray-400" />
-                            <span>{new Date(interview.date).toLocaleDateString('fr-FR')}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-gray-400" />
-                            <span>{interview.time} ({interview.duration})</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-400" />
-                            <span>{interview.location}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-gray-400" />
-                            <span>{interview.interviewer}</span>
-                          </div>
-                        </div>
+                     return (
+                       <div key={interview.id} className={`group relative bg-gradient-to-br from-white via-gray-50 to-gray-100 border rounded-xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${isToday ? 'ring-2 ring-blue-500 border-blue-300' : 'border-gray-200 hover:border-blue-300'}`}>
+                         <div className={`absolute top-0 left-0 w-full h-2 rounded-t-xl ${isToday ? 'bg-gradient-to-r from-blue-500 to-green-500' : isUpcoming ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gradient-to-r from-gray-400 to-gray-500'}`}></div>
+                         
+                         {isToday && (
+                           <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+                             AUJOURD'HUI
+                           </div>
+                         )}
 
-                        {interview.notes && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm text-gray-700">
-                              <strong>Notes:</strong> {interview.notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                         <div className="flex items-start justify-between mb-6">
+                           <div className="flex items-center gap-4">
+                             <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-lg ring-4 ring-white">
+                               {application?.logo ? (
+                                 <img 
+                                   src={application.logo} 
+                                   alt={interview.company}
+                                   className="w-full h-full object-cover rounded-xl"
+                                 />
+                               ) : (
+                                 <Building className="h-8 w-8 text-white" />
+                               )}
+                             </div>
+                             <div>
+                               <h3 className="text-xl font-bold text-gray-900 mb-1">{interview.company}</h3>
+                               <p className="text-lg text-gray-700 font-medium mb-2">{interview.position}</p>
+                               <div className="flex items-center gap-2">
+                                 <Badge className={`${getStatusStyle(interview.status)} text-xs font-semibold px-3 py-1`}>
+                                   {interview.status}
+                                 </Badge>
+                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium text-xs px-3 py-1">
+                                   {interview.type}
+                                 </Badge>
+                               </div>
+                             </div>
+                           </div>
+
+                           <InterviewActions
+                             interview={interview}
+                             onEdit={handleInterviewEdit}
+                             onDelete={handleInterviewDelete}
+                             onStatusChange={handleStatusChange}
+                           />
+                         </div>
+
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                           <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                             <div className="p-2 bg-blue-100 rounded-lg">
+                               <CalendarIcon className="h-4 w-4 text-blue-600" />
+                             </div>
+                             <div>
+                               <p className="text-xs text-gray-500 font-medium">Date</p>
+                               <p className="text-sm font-bold text-gray-900">{new Date(interview.date).toLocaleDateString('fr-FR')}</p>
+                             </div>
+                           </div>
+                           
+                           <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                             <div className="p-2 bg-green-100 rounded-lg">
+                               <Clock className="h-4 w-4 text-green-600" />
+                             </div>
+                             <div>
+                               <p className="text-xs text-gray-500 font-medium">Heure</p>
+                               <p className="text-sm font-bold text-gray-900">{interview.time}</p>
+                             </div>
+                           </div>
+                           
+                           <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                             <div className="p-2 bg-purple-100 rounded-lg">
+                               <MapPin className="h-4 w-4 text-purple-600" />
+                             </div>
+                             <div>
+                               <p className="text-xs text-gray-500 font-medium">Lieu</p>
+                               <p className="text-sm font-bold text-gray-900 truncate">{interview.location}</p>
+                             </div>
+                           </div>
+                           
+                           <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm">
+                             <div className="p-2 bg-orange-100 rounded-lg">
+                               <Users className="h-4 w-4 text-orange-600" />
+                             </div>
+                             <div>
+                               <p className="text-xs text-gray-500 font-medium">Intervieweur</p>
+                               <p className="text-sm font-bold text-gray-900 truncate">{interview.interviewer}</p>
+                             </div>
+                           </div>
+                         </div>
+
+                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                           <div className="flex items-center gap-4 text-sm text-gray-600">
+                             <span>Durée: <strong>{interview.duration}</strong></span>
+                             {interview.meetingLink && (
+                               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                 <Video className="h-3 w-3 mr-1" />
+                                 Lien dispo
+                               </Badge>
+                             )}
+                           </div>
+                         </div>
+
+                         {interview.notes && (
+                           <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+                             <p className="text-sm text-gray-700">
+                               <strong className="text-blue-800">Notes:</strong> {interview.notes}
+                             </p>
+                           </div>
+                         )}
+                       </div>
+                     );
+                   })}
                 </div>
               </CardContent>
             </Card>

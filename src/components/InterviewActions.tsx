@@ -35,13 +35,13 @@ const InterviewActions = ({
     if (interview.meetingLink) {
       window.open(interview.meetingLink, '_blank');
       toast({
-        title: "Lien de réunion ouvert",
-        description: `Redirection vers ${interview.type}`,
+        title: "Réunion ouverte",
+        description: `Redirection vers la visioconférence`,
       });
     } else {
       toast({
         title: "Aucun lien disponible",
-        description: "Pas de lien de réunion configuré",
+        description: "Pas de lien de réunion configuré pour cet entretien",
         variant: "destructive",
       });
     }
@@ -93,86 +93,131 @@ const InterviewActions = ({
 
   return (
     <div className="flex items-center gap-2">
-      <Badge className={getStatusColor(interview.status)}>
-        {interview.status}
-      </Badge>
-      
-      {/* Actions rapides */}
+      {/* Actions rapides principales */}
       <div className="flex items-center gap-1">
-        {interview.type.includes("Visio") && (
+        {interview.meetingLink && (
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-8 px-2 text-blue-600 hover:bg-blue-50"
+            className="h-8 px-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 hover:border-blue-300 transition-all"
             onClick={handleJoinMeeting}
+            title="Rejoindre la réunion"
           >
-            <Video className="h-4 w-4" />
+            <Video className="h-4 w-4 mr-1" />
+            <span className="text-xs font-medium">Rejoindre</span>
           </Button>
         )}
         
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-8 px-2 text-green-600 hover:bg-green-50"
+          className="h-8 px-3 text-green-600 hover:bg-green-50 hover:text-green-700 border border-green-200 hover:border-green-300 transition-all"
           onClick={handleCall}
+          title="Appeler"
         >
-          <Phone className="h-4 w-4" />
+          <Phone className="h-4 w-4 mr-1" />
+          <span className="text-xs font-medium">Appeler</span>
         </Button>
         
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-8 px-2 text-purple-600 hover:bg-purple-50"
+          className="h-8 px-3 text-purple-600 hover:bg-purple-50 hover:text-purple-700 border border-purple-200 hover:border-purple-300 transition-all"
           onClick={handleEmail}
+          title="Envoyer un email"
         >
-          <Mail className="h-4 w-4" />
+          <Mail className="h-4 w-4 mr-1" />
+          <span className="text-xs font-medium">Email</span>
         </Button>
       </div>
 
-      {/* Menu d'actions */}
+      {/* Menu d'actions avancées */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100 transition-colors">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={handleCopyDetails}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copier les détails
+        <DropdownMenuContent align="end" className="w-64 bg-white shadow-xl border border-gray-200 rounded-lg">
+          <DropdownMenuLabel className="font-semibold text-gray-900">Actions disponibles</DropdownMenuLabel>
+          
+          <DropdownMenuItem onClick={handleCopyDetails} className="hover:bg-blue-50 transition-colors">
+            <Copy className="mr-3 h-4 w-4 text-blue-600" />
+            <div>
+              <p className="font-medium">Copier les détails</p>
+              <p className="text-xs text-gray-500">Copier toutes les informations</p>
+            </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onEdit?.(interview.id)}>
-            <Edit className="mr-2 h-4 w-4" />
-            Modifier
+          
+          <DropdownMenuItem onClick={() => onEdit?.(interview.id)} className="hover:bg-orange-50 transition-colors">
+            <Edit className="mr-3 h-4 w-4 text-orange-600" />
+            <div>
+              <p className="font-medium">Modifier l'entretien</p>
+              <p className="text-xs text-gray-500">Éditer les informations</p>
+            </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleReschedule}>
-            <Calendar className="mr-2 h-4 w-4" />
-            Reprogrammer
+          
+          <DropdownMenuItem onClick={handleReschedule} className="hover:bg-purple-50 transition-colors">
+            <Calendar className="mr-3 h-4 w-4 text-purple-600" />
+            <div>
+              <p className="font-medium">Reprogrammer</p>
+              <p className="text-xs text-gray-500">Changer la date/heure</p>
+            </div>
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Changer le statut</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "confirmé")}>
-            <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-            Confirmer
+          <DropdownMenuLabel className="font-semibold text-gray-900">Changer le statut</DropdownMenuLabel>
+          
+          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "confirmé")} className="hover:bg-green-50 transition-colors">
+            <CheckCircle className="mr-3 h-4 w-4 text-green-600" />
+            <div>
+              <p className="font-medium text-green-700">Confirmer</p>
+              <p className="text-xs text-gray-500">Marquer comme confirmé</p>
+            </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "à confirmer")}>
-            <AlertCircle className="mr-2 h-4 w-4 text-yellow-600" />
-            À confirmer
+          
+          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "à confirmer")} className="hover:bg-yellow-50 transition-colors">
+            <AlertCircle className="mr-3 h-4 w-4 text-yellow-600" />
+            <div>
+              <p className="font-medium text-yellow-700">À confirmer</p>
+              <p className="text-xs text-gray-500">En attente de confirmation</p>
+            </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "annulé")}>
-            <XCircle className="mr-2 h-4 w-4 text-red-600" />
-            Annuler
+          
+          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "en attente")} className="hover:bg-blue-50 transition-colors">
+            <Clock className="mr-3 h-4 w-4 text-blue-600" />
+            <div>
+              <p className="font-medium text-blue-700">En attente</p>
+              <p className="text-xs text-gray-500">En attente de réponse</p>
+            </div>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "reporté")} className="hover:bg-orange-50 transition-colors">
+            <Calendar className="mr-3 h-4 w-4 text-orange-600" />
+            <div>
+              <p className="font-medium text-orange-700">Reporter</p>
+              <p className="text-xs text-gray-500">Reporter à plus tard</p>
+            </div>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={() => onStatusChange?.(interview.id, "annulé")} className="hover:bg-red-50 transition-colors">
+            <XCircle className="mr-3 h-4 w-4 text-red-600" />
+            <div>
+              <p className="font-medium text-red-700">Annuler</p>
+              <p className="text-xs text-gray-500">Annuler définitivement</p>
+            </div>
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             onClick={() => onDelete?.(interview.id)}
-            className="text-red-600 focus:text-red-600"
+            className="text-red-600 focus:text-red-600 hover:bg-red-50 transition-colors"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Supprimer
+            <Trash2 className="mr-3 h-4 w-4 text-red-600" />
+            <div>
+              <p className="font-medium text-red-700">Supprimer</p>
+              <p className="text-xs text-red-500">Suppression définitive</p>
+            </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
