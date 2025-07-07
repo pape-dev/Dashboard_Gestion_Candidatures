@@ -14,7 +14,10 @@ interface InterviewFormProps {
 }
 
 const InterviewForm = ({ trigger }: InterviewFormProps) => {
+  console.log("InterviewForm component loaded");
   const [open, setOpen] = useState(false);
+  
+  console.log("InterviewForm open state:", open);
   const [formData, setFormData] = useState({
     applicationId: "",
     company: "",
@@ -111,6 +114,8 @@ const InterviewForm = ({ trigger }: InterviewFormProps) => {
     }
   };
 
+  console.log("InterviewForm rendering...");
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
