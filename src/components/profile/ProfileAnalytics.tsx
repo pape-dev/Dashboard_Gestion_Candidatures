@@ -1,272 +1,369 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { useProfile } from '@/hooks/useProfile';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell 
-} from "recharts";
-import { 
-  TrendingUp, Target, Users, Calendar, 
-  Eye, Download, Share2, Award, Briefcase, Star
-} from "lucide-react";
-import { useProfile } from "@/hooks/useProfile";
-import { useApplications } from "@/hooks/useApplications";
+  Eye, 
+  Download, 
+  Calendar, 
+  TrendingUp, 
+  Award, 
+  Clock, 
+  MapPin, 
+  Globe,
+  BarChart3,
+  Activity,
+  Target,
+  Users
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const ProfileAnalytics = () => {
-  const { profile, experiences, skills } = useProfile();
-  const { applications, interviews, getStatistics } = useApplications();
-  const stats = getStatistics();
+  const { analytics, profile, experiences, skills, documents } = useProfile();
 
-  // Analytics data
-  const profileCompleteness = () => {
-    const fields = [
-      profile?.first_name,
-      profile?.last_name,
-      profile?.title,
-      profile?.bio,
-      profile?.phone,
-      profile?.location,
-      profile?.avatar_url,
-    ];
-    const completed = fields.filter(Boolean).length;
-    return Math.round((completed / fields.length) * 100);
+  const getCompletionColor = (percentage: number) => {
+    if (percentage >= 80) return 'text-green-600';
+    if (percentage >= 60) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
-  const skillsByCategory = skills.reduce((acc, skill) => {
-    const category = skill.category || 'autre';
-    acc[category] = (acc[category] || 0) + 1;
+  const getCompletionVariant = (percentage: number) => {
+    if (percentage >= 80) return 'default';
+    if (percentage >= 60) return 'secondary';
+    return 'destructive';
+  };
+
+  const getExperienceLevel = (years: number) => {
+    if (years < 2) return { label: 'Junior', color: 'bg-blue-100 text-blue-800' };
+    if (years < 5) return { label: 'Intermédiaire', color: 'bg-yellow-100 text-yellow-800' };
+    if (years < 10) return { label: 'Senior', color: 'bg-orange-100 text-orange-800' };
+    return { label: 'Expert', color: 'bg-red-100 text-red-800' };
+  };
+
+  const getSkillCategories = () => {
+    const categories = skills?.reduce((acc, skill) => {
+      const category = skill.category || 'Autre';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(skill);
     return acc;
-  }, {} as Record<string, number>);
+    }, {} as Record<string, any[]>);
+    
+    return categories || {};
+  };
 
-  const skillsChartData = Object.entries(skillsByCategory).map(([category, count]) => ({
-    category: category.charAt(0).toUpperCase() + category.slice(1),
-    count,
-    color: getSkillCategoryColor(category)
-  }));
+  const getTopSkills = () => {
+    return skills
+      ?.sort((a, b) => b.level - a.level)
+      .slice(0, 5) || [];
+  };
 
-  const experienceYears = experiences.reduce((total, exp) => {
-    const startDate = new Date(exp.start_date);
-    const endDate = exp.end_date ? new Date(exp.end_date) : new Date();
-    const years = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
-    return total + years;
-  }, 0);
+  const getRecentExperiences = () => {
+    return experiences
+      ?.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+      .slice(0, 3) || [];
+  };
 
-  const monthlyActivity = [
-    { month: "Jan", applications: 5, interviews: 2, responses: 3 },
-    { month: "Fév", applications: 8, interviews: 3, responses: 5 },
-    { month: "Mar", applications: 12, interviews: 4, responses: 7 },
-    { month: "Avr", applications: 15, interviews: 6, responses: 9 },
-  ];
-
-  function getSkillCategoryColor(category: string) {
-    switch (category) {
-      case 'technique': return '#3b82f6';
-      case 'soft': return '#10b981';
-      case 'langue': return '#8b5cf6';
-      case 'outils': return '#f59e0b';
-      default: return '#6b7280';
-    }
-  }
+  const getDocumentStats = () => {
+    const stats = {
+      total: documents?.length || 0,
+      cv: documents?.filter(d => d.type === 'cv').length || 0,
+      portfolio: documents?.filter(d => d.type === 'portfolio').length || 0,
+      certificates: documents?.filter(d => d.type === 'certificate').length || 0,
+    };
+    return stats;
+  };
 
   return (
     <div className="space-y-6">
-      {/* Profile Completion */}
+      {/* Vue d'ensemble */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Vues du profil</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{analytics?.profile_views || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +12% par rapport au mois dernier
+            </p>
+        </CardContent>
+      </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Téléchargements CV</CardTitle>
+            <Download className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics?.cv_downloads || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +8% par rapport au mois dernier
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expériences</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{experiences?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {getRecentExperiences().length} récentes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Compétences</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{skills?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {getTopSkills().length} principales
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Complétion du profil */}
+        <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Complétion du profil
+          </CardTitle>
+          <CardDescription>
+            Améliorez votre profil pour augmenter vos chances
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`text-2xl font-bold ${getCompletionColor(analytics?.profile_completion_percentage || 0)}`}>
+                {analytics?.profile_completion_percentage || 0}%
+              </div>
+              <Badge variant={getCompletionVariant(analytics?.profile_completion_percentage || 0)}>
+                {analytics?.profile_completion_percentage >= 80 ? 'Excellent' : 
+                 analytics?.profile_completion_percentage >= 60 ? 'Bon' : 'À améliorer'}
+              </Badge>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Dernière mise à jour: {analytics?.last_profile_update ? 
+                formatDistanceToNow(new Date(analytics.last_profile_update), { 
+                  addSuffix: true, 
+                  locale: fr 
+                }) : 'Jamais'}
+            </div>
+          </div>
+          <Progress value={analytics?.profile_completion_percentage || 0} className="h-2" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Informations manquantes</h4>
+              <div className="space-y-1">
+                {!profile?.bio && <div className="text-sm text-red-600">• Bio</div>}
+                {!profile?.phone && <div className="text-sm text-red-600">• Téléphone</div>}
+                {!profile?.location && <div className="text-sm text-red-600">• Localisation</div>}
+                {!profile?.linkedin_url && <div className="text-sm text-red-600">• LinkedIn</div>}
+                {!profile?.github_url && <div className="text-sm text-red-600">• GitHub</div>}
+                {!profile?.portfolio_url && <div className="text-sm text-red-600">• Portfolio</div>}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium">Suggestions d'amélioration</h4>
+              <div className="space-y-1">
+                {experiences?.length < 2 && <div className="text-sm text-blue-600">• Ajouter plus d'expériences</div>}
+                {skills?.length < 5 && <div className="text-sm text-blue-600">• Compléter vos compétences</div>}
+                {getDocumentStats().total < 2 && <div className="text-sm text-blue-600">• Ajouter des documents</div>}
+                {!profile?.availability && <div className="text-sm text-blue-600">• Spécifier votre disponibilité</div>}
+              </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+      {/* Statistiques détaillées */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Compétences par catégorie */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Compétences par catégorie
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(getSkillCategories()).map(([category, skillsList]) => (
+                <div key={category} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{category}</span>
+                    <span className="text-sm text-muted-foreground">{skillsList.length} compétences</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {skillsList.slice(0, 3).map((skill) => (
+                      <Badge key={skill.id} variant="secondary" className="text-xs">
+                        {skill.skill_name} (Niveau {skill.level}/5)
+                      </Badge>
+                    ))}
+                    {skillsList.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{skillsList.length - 3} autres
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+              </div>
+          </CardContent>
+        </Card>
+
+        {/* Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{getDocumentStats().cv}</div>
+                  <div className="text-sm text-blue-600">CV</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{getDocumentStats().portfolio}</div>
+                  <div className="text-sm text-green-600">Portfolios</div>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">{getDocumentStats().certificates}</div>
+                  <div className="text-sm text-yellow-600">Certificats</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">{getDocumentStats().total}</div>
+                  <div className="text-sm text-purple-600">Total</div>
+                </div>
+              </div>
+              
+              {documents?.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Documents récents</h4>
+                  {documents.slice(0, 3).map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                      <div className="flex items-center gap-2">
+                        <Download className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{doc.name}</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {doc.type}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Expériences récentes */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            Complétude du profil
+            <Award className="h-5 w-5" />
+            Expériences récentes
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Progression</span>
-              <span className="text-sm text-muted-foreground">{profileCompleteness()}%</span>
-            </div>
-            <Progress value={profileCompleteness()} className="w-full" />
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${profile?.avatar_url ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Photo de profil
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${profile?.bio ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Présentation
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${experiences.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Expérience
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${skills.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Compétences
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${profile?.phone ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  Contact
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${profile?.linkedin_url ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  LinkedIn
-                </div>
+            {getRecentExperiences().map((experience) => (
+              <div key={experience.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Award className="h-6 w-6 text-primary" />
               </div>
             </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium truncate">{experience.title}</h4>
+                    {experience.is_current && (
+                      <Badge variant="default" className="text-xs">Actuel</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{experience.company}</p>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(experience.start_date).toLocaleDateString('fr-FR')} - 
+                      {experience.end_date ? new Date(experience.end_date).toLocaleDateString('fr-FR') : 'Présent'}
+                    </div>
+                    {experience.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {experience.location}
+                      </div>
+                    )}
+                  </div>
+                  {experience.technologies && experience.technologies.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {experience.technologies.slice(0, 5).map((tech, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {tech}
+                        </Badge>
+                      ))}
+                      {experience.technologies.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{experience.technologies.length - 5} autres
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {getRecentExperiences().length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune expérience ajoutée</p>
+                <p className="text-sm">Ajoutez vos expériences pour améliorer votre profil</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Expérience</p>
-                <p className="text-lg font-semibold">{Math.round(experienceYears)} ans</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Compétences</p>
-                <p className="text-lg font-semibold">{skills.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Candidatures</p>
-                <p className="text-lg font-semibold">{stats.totalApplications}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-orange-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Entretiens</p>
-                <p className="text-lg font-semibold">{stats.interviewsScheduled}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Skills Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Répartition des compétences</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {skillsChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={skillsChartData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="count"
-                    label={({ category, count }) => `${category}: ${count}`}
-                  >
-                    {skillsChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-48 flex items-center justify-center text-muted-foreground">
-                Aucune compétence ajoutée
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Activity Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Activité récente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={monthlyActivity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="applications" fill="#3b82f6" name="Candidatures" />
-                <Bar dataKey="interviews" fill="#10b981" name="Entretiens" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Achievements */}
+      {/* Actions rapides */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Accomplissements récents
+            <Activity className="h-5 w-5" />
+            Actions rapides
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-              <Award className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="font-medium text-green-800 dark:text-green-200">Profil complété à {profileCompleteness()}%</p>
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  {profileCompleteness() >= 80 ? "Excellent! Votre profil est très attractif." : "Continuez pour améliorer votre visibilité."}
-                </p>
-              </div>
-            </div>
-            
-            {experiences.length > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <Briefcase className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-blue-800 dark:text-blue-200">
-                    {Math.round(experienceYears)} années d'expérience ajoutées
-                  </p>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">Votre expertise est bien documentée.</p>
-                </div>
-              </div>
-            )}
-            
-            {skills.length >= 5 && (
-              <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                <Star className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="font-medium text-purple-800 dark:text-purple-200">
-                    {skills.length} compétences maîtrisées
-                  </p>
-                  <p className="text-sm text-purple-600 dark:text-purple-400">Profil très complet et attractif.</p>
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+              <Award className="h-6 w-6" />
+              <span>Ajouter une expérience</span>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+              <Target className="h-6 w-6" />
+              <span>Ajouter des compétences</span>
+            </Button>
+            <Button variant="outline" className="h-auto p-4 flex-col gap-2">
+              <Download className="h-6 w-6" />
+              <span>Uploader un document</span>
+            </Button>
           </div>
         </CardContent>
       </Card>

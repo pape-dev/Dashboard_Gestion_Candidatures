@@ -1,317 +1,511 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Briefcase, Plus, Edit, Trash2, Calendar, MapPin, Loader2 } from "lucide-react";
-import { useProfile, Experience } from "@/hooks/useProfile";
-
-const experienceSchema = z.object({
-  title: z.string().min(1, "Le titre est requis"),
-  company: z.string().min(1, "L'entreprise est requise"),
-  location: z.string().optional(),
-  start_date: z.string().min(1, "La date de début est requise"),
-  end_date: z.string().optional(),
-  is_current: z.boolean().default(false),
-  description: z.string().optional(),
-}).refine((data) => {
-  if (!data.is_current && !data.end_date) {
-    return false;
-  }
-  return true;
-}, {
-  message: "La date de fin est requise si ce n'est pas votre poste actuel",
-  path: ["end_date"],
-});
-
-type ExperienceFormData = z.infer<typeof experienceSchema>;
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { experienceSchema, type ExperienceFormData } from '@/lib/validation';
+import { useProfile } from '@/hooks/useProfile';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Calendar, 
+  MapPin, 
+  Building, 
+  Briefcase, 
+  Loader2, 
+  CheckCircle, 
+  AlertCircle,
+  X
+} from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { handleSupabaseError } from '@/lib/security';
 
 interface ExperienceFormProps {
-  experiences: Experience[];
+  experiences: any[];
 }
 
 const ExperienceForm = ({ experiences }: ExperienceFormProps) => {
-  const { addExperience, updateExperience, deleteExperience } = useProfile();
-  const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
+  const { addExperience, updateExperience, deleteExperience, isAddingExperience, isUpdatingExperience, isDeletingExperience } = useProfile();
+  const [editingExperience, setEditingExperience] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTechnology, setNewTechnology] = useState('');
+  const [newAchievement, setNewAchievement] = useState('');
 
-  const form = useForm<ExperienceFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+    setValue,
+    watch,
+    reset,
+    clearErrors
+  } = useForm<ExperienceFormData>({
     resolver: zodResolver(experienceSchema),
     defaultValues: {
-      title: "",
-      company: "",
-      location: "",
-      start_date: "",
-      end_date: "",
+      title: '',
+      company: '',
+      location: '',
+      start_date: '',
+      end_date: '',
       is_current: false,
-      description: "",
-    },
+      description: '',
+      achievements: [],
+      technologies: [],
+    }
   });
 
-  const resetForm = () => {
-    form.reset({
-      title: "",
-      company: "",
-      location: "",
-      start_date: "",
-      end_date: "",
-      is_current: false,
-      description: "",
-    });
-    setEditingExperience(null);
-  };
+  const watchedValues = watch();
 
   const onSubmit = async (data: ExperienceFormData) => {
-    const experienceData = {
-      title: data.title,
-      company: data.company,
-      location: data.location || null,
-      start_date: data.start_date,
-      end_date: data.end_date || null,
-      is_current: data.is_current,
-      description: data.description || null,
-    };
-
+    try {
     if (editingExperience) {
-      await updateExperience(editingExperience.id, experienceData);
+        await updateExperience({ id: editingExperience.id, updates: data });
+        setEditingExperience(null);
     } else {
-      await addExperience(experienceData);
+        await addExperience(data);
+      }
+      
+      reset();
+      setIsDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: editingExperience ? "Expérience mise à jour avec succès" : "Expérience ajoutée avec succès",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Expérience');
     }
-    resetForm();
-    setIsDialogOpen(false);
   };
 
-  const handleEdit = (experience: Experience) => {
+  const handleEdit = (experience: any) => {
     setEditingExperience(experience);
-    form.reset({
-      title: experience.title,
-      company: experience.company,
-      location: experience.location || "",
-      start_date: experience.start_date,
-      end_date: experience.end_date || "",
-      is_current: experience.is_current || false,
-      description: experience.description || "",
-    });
+    setValue('title', experience.title);
+    setValue('company', experience.company);
+    setValue('location', experience.location || '');
+    setValue('start_date', experience.start_date);
+    setValue('end_date', experience.end_date || '');
+    setValue('is_current', experience.is_current);
+    setValue('description', experience.description || '');
+    setValue('achievements', experience.achievements || []);
+    setValue('technologies', experience.technologies || []);
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette expérience ?")) {
+    try {
       await deleteExperience(id);
+      toast({
+        title: "Succès",
+        description: "Expérience supprimée avec succès",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Suppression expérience');
     }
+  };
+
+  const handleCancel = () => {
+    setEditingExperience(null);
+    reset();
+    clearErrors();
+    setIsDialogOpen(false);
+  };
+
+  const addTechnology = () => {
+    if (newTechnology.trim()) {
+      const currentTechnologies = watchedValues.technologies || [];
+      setValue('technologies', [...currentTechnologies, newTechnology.trim()]);
+      setNewTechnology('');
+    }
+  };
+
+  const removeTechnology = (index: number) => {
+    const currentTechnologies = watchedValues.technologies || [];
+    setValue('technologies', currentTechnologies.filter((_, i) => i !== index));
+  };
+
+  const addAchievement = () => {
+    if (newAchievement.trim()) {
+      const currentAchievements = watchedValues.achievements || [];
+      setValue('achievements', [...currentAchievements, newAchievement.trim()]);
+      setNewAchievement('');
+    }
+  };
+
+  const removeAchievement = (index: number) => {
+    const currentAchievements = watchedValues.achievements || [];
+    setValue('achievements', currentAchievements.filter((_, i) => i !== index));
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
-      month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      month: 'long'
     });
   };
 
+  const getDuration = (startDate: string, endDate: string | null, isCurrent: boolean) => {
+    const start = new Date(startDate);
+    const end = isCurrent ? new Date() : (endDate ? new Date(endDate) : new Date());
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffYears = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 365));
+    return diffYears;
+  };
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
-          Expérience professionnelle
-        </CardTitle>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Expériences professionnelles</h2>
+          <p className="text-muted-foreground">
+            Gérez vos expériences professionnelles pour enrichir votre profil
+          </p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" onClick={resetForm}>
+            <Button onClick={() => {
+              setEditingExperience(null);
+              reset();
+            }}>
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter
+              Ajouter une expérience
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingExperience ? "Modifier l'expérience" : "Ajouter une expérience"}
+                {editingExperience ? 'Modifier l\'expérience' : 'Ajouter une expérience'}
               </DialogTitle>
+              <DialogDescription>
+                Remplissez les informations de votre expérience professionnelle
+              </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Informations de base */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Titre du poste</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ex: Développeur Frontend" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="space-y-2">
+                  <Label htmlFor="title">Titre du poste *</Label>
+                  <Input
+                    id="title"
+                    {...register('title')}
+                    placeholder="Ex: Développeur Full Stack"
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="company"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Entreprise</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ex: Google" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  {errors.title && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.title.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company">Entreprise *</Label>
+                  <Input
+                    id="company"
+                    {...register('company')}
+                    placeholder="Ex: Google"
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Localisation</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ex: Paris, France" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  {errors.company && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.company.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="location">Localisation</Label>
+                  <Input
+                    id="location"
+                    {...register('location')}
+                    placeholder="Ex: Paris, France"
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="start_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date de début</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  {errors.location && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.location.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="start_date">Date de début *</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    {...register('start_date')}
                   />
+                  {errors.start_date && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.start_date.message}
+                    </p>
+                  )}
+                </div>
                 </div>
                 
-                <FormField
-                  control={form.control}
-                  name="is_current"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          C'est mon poste actuel
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                
-                {!form.watch("is_current") && (
-                  <FormField
-                    control={form.control}
-                    name="end_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date de fin</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">Date de fin</Label>
+                  <Input
+                    id="end_date"
+                    type="date"
+                    {...register('end_date')}
+                    disabled={watchedValues.is_current}
                   />
-                )}
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
+                  {errors.end_date && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.end_date.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 pt-6">
+                  <Checkbox
+                    id="is_current"
+                    checked={watchedValues.is_current}
+                    onCheckedChange={(checked) => setValue('is_current', checked as boolean)}
+                  />
+                  <Label htmlFor="is_current">Poste actuel</Label>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
                         <Textarea 
+                  id="description"
+                  {...register('description')}
                           placeholder="Décrivez vos responsabilités et réalisations..."
                           rows={4}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
                 />
-                
+                {errors.description && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.description.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Technologies */}
+              <div className="space-y-4">
+                <Label>Technologies utilisées</Label>
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    {editingExperience ? "Modifier" : "Ajouter"}
+                  <Input
+                    value={newTechnology}
+                    onChange={(e) => setNewTechnology(e.target.value)}
+                    placeholder="Ex: React, TypeScript"
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTechnology())}
+                  />
+                  <Button type="button" onClick={addTechnology} size="sm">
+                    Ajouter
                   </Button>
-                  <Button 
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(watchedValues.technologies || []).map((tech, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {tech}
+                      <button
                     type="button" 
-                    variant="outline" 
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Annuler
+                        onClick={() => removeTechnology(index)}
+                        className="ml-1 hover:text-red-600"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Réalisations */}
+              <div className="space-y-4">
+                <Label>Réalisations principales</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newAchievement}
+                    onChange={(e) => setNewAchievement(e.target.value)}
+                    placeholder="Ex: Développement d'une application web"
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAchievement())}
+                  />
+                  <Button type="button" onClick={addAchievement} size="sm">
+                    Ajouter
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(watchedValues.achievements || []).map((achievement, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                      <span className="flex-1 text-sm">• {achievement}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAchievement(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!isDirty || isAddingExperience || isUpdatingExperience}
+                >
+                  {isAddingExperience || isUpdatingExperience ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sauvegarde...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {editingExperience ? 'Mettre à jour' : 'Ajouter'}
+                    </>
+                  )}
                   </Button>
                 </div>
               </form>
-            </Form>
           </DialogContent>
         </Dialog>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {experiences.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Aucune expérience ajoutée. Cliquez sur "Ajouter" pour commencer.
-            </p>
-          ) : (
-            experiences.map((exp) => (
-              <div key={exp.id} className="border-l-2 border-primary/20 pl-4 pb-6 last:pb-0">
+      </div>
+
+      {/* Liste des expériences */}
+      <div className="space-y-4">
+        {experiences?.length > 0 ? (
+          experiences.map((experience) => (
+            <Card key={experience.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground">{exp.title}</h3>
-                    <p className="text-primary font-medium">{exp.company}</p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(exp.start_date)} - {exp.is_current ? "Présent" : exp.end_date ? formatDate(exp.end_date) : "N/A"}
-                      </div>
-                      {exp.location && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {exp.location}
-                        </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Briefcase className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold">{experience.title}</h3>
+                      {experience.is_current && (
+                        <Badge variant="default" className="text-xs">Actuel</Badge>
                       )}
                     </div>
-                    {exp.description && (
-                      <p className="text-muted-foreground mt-2 text-sm">{exp.description}</p>
+                    
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                      <div className="flex items-center gap-1">
+                        <Building className="h-4 w-4" />
+                        {experience.company}
+                      </div>
+                      {experience.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {experience.location}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(experience.start_date)} - 
+                        {experience.is_current ? 'Présent' : formatDate(experience.end_date || '')}
+                        <span className="text-xs">
+                          ({getDuration(experience.start_date, experience.end_date, experience.is_current)} an(s))
+                        </span>
+                      </div>
+                    </div>
+
+                    {experience.description && (
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {experience.description}
+                      </p>
+                    )}
+
+                    {experience.technologies && experience.technologies.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex flex-wrap gap-1">
+                          {experience.technologies.slice(0, 5).map((tech, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {tech}
+                            </Badge>
+                          ))}
+                          {experience.technologies.length > 5 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{experience.technologies.length - 5} autres
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {experience.achievements && experience.achievements.length > 0 && (
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-medium">Réalisations :</h4>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          {experience.achievements.slice(0, 3).map((achievement, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{achievement}</span>
+                            </li>
+                          ))}
+                          {experience.achievements.length > 3 && (
+                            <li className="text-xs text-muted-foreground">
+                              +{experience.achievements.length - 3} autres réalisations
+                            </li>
+                          )}
+                        </ul>
+                      </div>
                     )}
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(exp)}>
+
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(experience)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(exp.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(experience.id)}
+                      disabled={isDeletingExperience}
+                    >
+                      {isDeletingExperience ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
                       <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
-              </div>
-            ))
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">Aucune expérience</h3>
+              <p className="text-muted-foreground mb-4">
+                Ajoutez vos expériences professionnelles pour enrichir votre profil
+              </p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter votre première expérience
+              </Button>
+            </CardContent>
+          </Card>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 
