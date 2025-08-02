@@ -15,7 +15,7 @@ const StatsCards = () => {
       changeType: "positive",
       icon: Briefcase,
       description: "Ce mois-ci",
-      gradient: "from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900",
+      gradient: "from-blue-50/80 to-blue-100/80 dark:from-blue-950/80 dark:to-blue-900/80",
       iconBg: "bg-blue-600",
       textColor: "text-blue-700 dark:text-blue-300"
     },
@@ -26,7 +26,7 @@ const StatsCards = () => {
       changeType: "positive",
       icon: Calendar,
       description: "Cette semaine",
-      gradient: "from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900",
+      gradient: "from-emerald-50/80 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/80",
       iconBg: "bg-emerald-600",
       textColor: "text-emerald-700 dark:text-emerald-300"
     },
@@ -37,7 +37,7 @@ const StatsCards = () => {
       changeType: "positive",
       icon: TrendingUp,
       description: "Moyenne mensuelle",
-      gradient: "from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900",
+      gradient: "from-purple-50/80 to-purple-100/80 dark:from-purple-950/80 dark:to-purple-900/80",
       iconBg: "bg-purple-600",
       textColor: "text-purple-700 dark:text-purple-300"
     },
@@ -48,47 +48,50 @@ const StatsCards = () => {
       changeType: "negative",
       icon: Target,
       description: "28/40 candidatures",
-      gradient: "from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900",
+      gradient: "from-amber-50/80 to-amber-100/80 dark:from-amber-950/80 dark:to-amber-900/80",
       iconBg: "bg-amber-600",
       textColor: "text-amber-700 dark:text-amber-300"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat, index) => (
-        <Card key={index} className={`relative overflow-hidden bg-gradient-to-br ${stat.gradient} border-0 hover:shadow-xl hover:scale-105 transition-all duration-300 group`}>
-          <div className="absolute top-0 right-0 p-3">
-            <div className={`p-3 rounded-full ${stat.iconBg} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+        <Card key={index} className={`relative overflow-hidden bg-gradient-to-br ${stat.gradient} backdrop-blur-sm border border-white/20 dark:border-slate-700/20 hover:shadow-2xl hover:scale-105 transition-all duration-500 group`}>
+          {/* Effet de brillance */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="absolute top-4 right-4">
+            <div className={`p-3 rounded-2xl ${stat.iconBg} shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
               <stat.icon className="h-6 w-6 text-white" />
             </div>
           </div>
           
-          <CardHeader className="pb-3">
-            <CardTitle className={`text-sm font-semibold ${stat.textColor} uppercase tracking-wide`}>
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className={`text-sm font-bold ${stat.textColor} uppercase tracking-wider`}>
               {stat.title}
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 pb-6">
             <div className="flex items-end justify-between">
               <div className="space-y-1">
-                <div className={`text-3xl font-bold ${stat.textColor} group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`text-4xl font-bold ${stat.textColor} group-hover:scale-110 transition-transform duration-500`}>
                   {stat.value}
                 </div>
-                <p className={`text-xs ${stat.textColor} opacity-80`}>
+                <p className={`text-sm ${stat.textColor} opacity-80 font-medium`}>
                   {stat.description}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-3">
               <Badge 
                 variant={stat.changeType === "positive" ? "default" : "destructive"}
-                className={`flex items-center gap-1 shadow-sm ${
+                className={`flex items-center gap-1 shadow-lg ${
                   stat.changeType === "positive" 
-                    ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300" 
-                    : "bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-300"
+                    ? "bg-green-100/90 text-green-800 border-green-200 dark:bg-green-900/90 dark:text-green-300" 
+                    : "bg-red-100/90 text-red-800 border-red-200 dark:bg-red-900/90 dark:text-red-300"
                 }`}
               >
                 {stat.changeType === "positive" ? (
@@ -101,7 +104,7 @@ const StatsCards = () => {
               
               {stat.changeType === "positive" && index === 1 && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="h-3 w-3 animate-pulse" />
                   <span className="font-medium">Excellent!</span>
                 </div>
               )}

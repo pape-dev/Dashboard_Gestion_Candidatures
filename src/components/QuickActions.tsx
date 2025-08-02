@@ -69,56 +69,56 @@ const QuickActions = () => {
   ];
 
   return (
-    <Card className="mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-0 shadow-xl">
+    <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 shadow-2xl">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
-          <div className="p-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
+        <CardTitle className="flex items-center gap-3 text-slate-900 dark:text-slate-100">
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 shadow-xl">
             <Zap className="h-5 w-5 text-white" />
           </div>
           Actions rapides
           <div className="flex items-center gap-1 ml-auto">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Optimisé IA</span>
+            <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
+            <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">Optimisé IA</span>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {actions.map((action, index) => (
             <div key={index} className="group relative">
               <Button
                 variant="outline"
-                className="w-full h-auto p-0 border-0 bg-white dark:bg-slate-800 hover:shadow-2xl transition-all duration-500 hover:scale-105 overflow-hidden"
+                className="w-full h-auto p-0 border border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-500 hover:scale-105 overflow-hidden rounded-2xl"
                 onClick={action.action}
               >
-                <div className="w-full p-6 relative">
+                <div className="w-full p-8 relative">
                   {/* Background gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-15 transition-opacity duration-500`} />
                   
                   {/* Badge */}
-                  <div className="absolute top-3 right-3">
-                    <Badge className={`text-xs px-2 py-1 ${action.badgeColor} border-0`}>
+                  <div className="absolute top-4 right-4">
+                    <Badge className={`text-xs px-3 py-1 ${action.badgeColor} border-0 shadow-lg`}>
                       {action.badge}
                     </Badge>
                   </div>
                   
                   {/* Icon */}
-                  <div className={`mb-4 mx-auto w-14 h-14 rounded-2xl bg-gradient-to-r ${action.gradient} ${action.hoverGradient} flex items-center justify-center shadow-lg group-hover:shadow-2xl group-hover:scale-110 transition-all duration-500`}>
-                    <action.icon className="h-7 w-7 text-white" />
+                  <div className={`mb-6 mx-auto w-16 h-16 rounded-3xl bg-gradient-to-r ${action.gradient} ${action.hoverGradient} flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
+                    <action.icon className="h-8 w-8 text-white" />
                   </div>
                   
                   {/* Content */}
-                  <div className="text-center space-y-2">
-                    <div className="font-bold text-base text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
+                  <div className="text-center space-y-3">
+                    <div className="font-bold text-lg text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
                       {action.title}
                     </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
+                    <div className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors leading-relaxed">
                       {action.description}
                     </div>
                   </div>
                   
                   {/* Hover effect line */}
-                  <div className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${action.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`} />
+                  <div className={`absolute bottom-0 left-0 h-2 bg-gradient-to-r ${action.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-b-2xl`} />
                 </div>
               </Button>
             </div>
@@ -126,19 +126,19 @@ const QuickActions = () => {
         </div>
         
         {/* Bottom stats */}
-        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
+          <div className="grid grid-cols-3 gap-6 text-center">
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">47</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Actions cette semaine</div>
+              <div className="text-3xl font-bold text-slate-700 dark:text-slate-300">47</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Actions cette semaine</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-600">12</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Objectifs atteints</div>
+              <div className="text-3xl font-bold text-emerald-600">12</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Objectifs atteints</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-blue-600">89%</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Taux de réalisation</div>
+              <div className="text-3xl font-bold text-blue-600">89%</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Taux de réalisation</div>
             </div>
           </div>
         </div>

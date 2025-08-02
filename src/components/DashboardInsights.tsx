@@ -59,38 +59,44 @@ const DashboardInsights = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* AI Insights */}
-      <Card className="lg:col-span-2 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-0 hover:shadow-xl transition-all duration-300">
+      <Card className="lg:col-span-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <Brain className="h-5 w-5 text-purple-600" />
+          <CardTitle className="flex items-center gap-3 text-slate-900 dark:text-slate-100">
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 shadow-xl">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
             Insights IA
+            <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200 ml-auto">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Alimenté par IA
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {insights.map((insight, index) => (
-            <div key={index} className={`p-4 rounded-lg bg-gradient-to-r ${insight.gradient} border border-opacity-20`}>
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-white/50 dark:bg-black/20">
+            <div key={index} className={`p-6 rounded-2xl bg-gradient-to-r ${insight.gradient} border border-opacity-20 hover:shadow-lg transition-all duration-300`}>
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/30 shadow-lg">
                   <insight.icon className={`h-5 w-5 ${insight.iconColor}`} />
                 </div>
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className={`font-semibold ${insight.iconColor}`}>
+                    <h4 className={`font-bold text-lg ${insight.iconColor}`}>
                       {insight.title}
                     </h4>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs shadow-sm">
                       {insight.type === "success" && <CheckCircle className="h-3 w-3 mr-1" />}
                       {insight.type === "warning" && <Clock className="h-3 w-3 mr-1" />}
                       {insight.type === "tip" && <Zap className="h-3 w-3 mr-1" />}
                       {insight.type === "success" ? "Succès" : insight.type === "warning" ? "Action" : "Conseil"}
                     </Badge>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     {insight.message}
                   </p>
-                  <Button variant="outline" size="sm" className="text-xs">
+                  <Button variant="outline" size="sm" className="text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300">
                     {insight.action}
                   </Button>
                 </div>
@@ -101,39 +107,41 @@ const DashboardInsights = () => {
       </Card>
 
       {/* Progress Goals */}
-      <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-0 hover:shadow-xl transition-all duration-300">
+      <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
-            <TrendingUp className="h-5 w-5 text-indigo-600" />
+          <CardTitle className="flex items-center gap-3 text-slate-900 dark:text-slate-100">
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-blue-600 shadow-xl">
+              <TrendingUp className="h-6 w-6 text-white" />
+            </div>
             Objectifs
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           {goals.map((goal, index) => (
-            <div key={index} className="space-y-3">
+            <div key={index} className="space-y-4 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center justify-between">
-                <h4 className={`text-sm font-semibold ${goal.textColor}`}>
+                <h4 className={`text-base font-bold ${goal.textColor}`}>
                   {goal.title}
                 </h4>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-sm font-semibold shadow-sm">
                   {goal.current}/{goal.target}
                 </Badge>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 font-medium">
                   <span>{goal.current} {goal.unit}</span>
                   <span>{goal.progress}%</span>
                 </div>
-                <div className="w-full bg-white/50 dark:bg-black/20 rounded-full h-2">
+                <div className="w-full bg-white/80 dark:bg-black/30 rounded-full h-3 shadow-inner">
                   <div 
-                    className={`${goal.color} h-2 rounded-full transition-all duration-500 ease-out`}
+                    className={`${goal.color} h-3 rounded-full transition-all duration-700 ease-out shadow-sm`}
                     style={{ width: `${goal.progress}%` }}
                   />
                 </div>
               </div>
               
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                 Plus que {goal.target - goal.current} {goal.unit} pour atteindre votre objectif
               </p>
             </div>

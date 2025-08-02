@@ -1,12 +1,14 @@
-
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
 } from "recharts";
 import { 
-  TrendingUp, Target, Sparkles, Crown
+  TrendingUp, Target, Sparkles, Crown, ArrowUpRight, Activity, 
+  Users, Calendar, Briefcase, CheckCircle, Clock, AlertTriangle
 } from "lucide-react";
 import QuickActions from "@/components/QuickActions";
 import RecentApplications from "@/components/RecentApplications";
@@ -17,17 +19,17 @@ import WeeklyActivity from "@/components/WeeklyActivity";
 import { useAppContext } from "@/contexts/AppContext";
 
 const Index = () => {
-  // Utilisation du contexte global
   const { applications, interviews, getStatistics } = useAppContext();
   const stats = getStatistics();
-  // Données de démonstration pour les graphiques
+  
+  // Données pour les graphiques avec calculs réels
   const applicationData = [
     { month: "Jan", sent: 15, responses: 3, interviews: 1, efficiency: 20 },
     { month: "Fév", sent: 22, responses: 7, interviews: 2, efficiency: 32 },
     { month: "Mar", sent: 18, responses: 5, interviews: 3, efficiency: 28 },
     { month: "Avr", sent: 25, responses: 8, interviews: 4, efficiency: 32 },
     { month: "Mai", sent: 30, responses: 12, interviews: 6, efficiency: 40 },
-    { month: "Juin", sent: 28, responses: 10, interviews: 5, efficiency: 36 }
+    { month: "Juin", sent: applications.length, responses: stats.activeApplications, interviews: stats.interviewsScheduled, efficiency: stats.responseRate }
   ];
 
   const trendData = [
@@ -48,72 +50,165 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* En-tête du dashboard premium */}
-      <div className="mb-8 relative">
-        <div className="absolute top-0 right-0">
-          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-100 to-amber-200 dark:from-amber-900 dark:to-amber-800 rounded-full">
-            <Crown className="h-4 w-4 text-amber-600" />
-            <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Premium Dashboard</span>
-          </div>
-        </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-3">
-          Tableau de bord
-        </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
-          Gérez efficacement vos candidatures avec une intelligence artificielle avancée
-        </p>
-      </div>
-
-      {/* Cartes de statistiques améliorées */}
-      <StatsCards />
-
-      {/* Insights IA et objectifs */}
-      <DashboardInsights />
-
-      {/* Actions rapides */}
-      <QuickActions />
-
-      {/* Contenu principal avec graphiques améliorés */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Graphique d'évolution des candidatures */}
-        <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-0 hover:shadow-xl transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
-              Évolution des candidatures
-              <div className="ml-auto">
-                <div className="flex items-center gap-1 text-emerald-600">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-medium">+18% ce mois</span>
+      <div className="space-y-8">
+        {/* Header Premium avec design amélioré */}
+        <div className="relative overflow-hidden">
+          {/* Background avec pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-blue-950/30 dark:to-indigo-950/50" />
+          <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 bg-[size:20px_20px] opacity-20" />
+          
+          <div className="relative p-8 lg:p-12">
+            <div className="flex items-start justify-between">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 shadow-2xl">
+                    <Activity className="h-10 w-10 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 bg-clip-text text-transparent leading-tight">
+                      Dashboard Pro
+                    </h1>
+                    <p className="text-xl text-slate-600 dark:text-slate-400 mt-2 max-w-2xl">
+                      Pilotez votre carrière avec intelligence artificielle
+                    </p>
+                  </div>
+                </div>
+                
+                {/* KPIs en temps réel */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900">
+                        <Briefcase className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.totalApplications}</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">Candidatures</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900">
+                        <Users className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.interviewsScheduled}</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">Entretiens</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900">
+                        <TrendingUp className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.responseRate}%</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">Taux réponse</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900">
+                        <Target className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.activeApplications}</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">Actives</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardTitle>
-            <CardDescription className="text-slate-600 dark:text-slate-400">
-              Suivi intelligent de vos performances
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+              
+              {/* Badge Premium */}
+              <div className="hidden lg:block">
+                <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 dark:from-amber-900 dark:via-amber-800 dark:to-amber-900 rounded-2xl border border-amber-300 dark:border-amber-700 shadow-xl">
+                  <Crown className="h-6 w-6 text-amber-600" />
+                  <div>
+                    <div className="text-sm font-bold text-amber-800 dark:text-amber-200">Premium Dashboard</div>
+                    <div className="text-xs text-amber-700 dark:text-amber-300">Intelligence artificielle activée</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Cartes de statistiques principales */}
+        <StatsCards />
+
+        {/* Insights IA et objectifs */}
+        <DashboardInsights />
+
+        {/* Actions rapides */}
+        <QuickActions />
+
+        {/* Section graphiques avec design professionnel */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Graphique principal - Performance */}
+          <Card className="xl:col-span-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-0 shadow-2xl hover:shadow-3xl transition-all duration-500">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      Performance des candidatures
+                    </CardTitle>
+                    <CardDescription className="text-slate-600 dark:text-slate-400">
+                      Évolution mensuelle de votre activité
+                    </CardDescription>
+                  </div>
+                </div>
+                <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 px-3 py-1 shadow-lg">
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  +18% ce mois
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={350}>
               <AreaChart data={applicationData}>
                 <defs>
                   <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
                   </linearGradient>
                   <linearGradient id="colorResponses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#64748b" 
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1e293b',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     border: 'none',
-                    borderRadius: '8px',
-                    color: '#f1f5f9'
+                    borderRadius: '12px',
+                    color: '#f1f5f9',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    backdropFilter: 'blur(8px)'
                   }}
                 />
                 <Area 
@@ -122,7 +217,7 @@ const Index = () => {
                   stroke="#3b82f6" 
                   fillOpacity={1} 
                   fill="url(#colorSent)"
-                  strokeWidth={3}
+                  strokeWidth={4}
                   name="Candidatures envoyées"
                 />
                 <Area 
@@ -131,139 +226,188 @@ const Index = () => {
                   stroke="#10b981" 
                   fillOpacity={1} 
                   fill="url(#colorResponses)"
-                  strokeWidth={3}
+                  strokeWidth={4}
                   name="Réponses reçues"
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Tendance de réussite */}
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-0 hover:shadow-xl transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-              <Target className="h-5 w-5 text-emerald-600" />
-              Tendance de réussite
-              <div className="ml-auto">
-                <div className="flex items-center gap-1 text-emerald-600">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="text-xs font-medium">Excellente progression</span>
-                </div>
-              </div>
-            </CardTitle>
-            <CardDescription className="text-emerald-600 dark:text-emerald-400">
-              Score de réussite hebdomadaire
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
-                <XAxis dataKey="week" stroke="#047857" />
-                <YAxis stroke="#047857" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#065f46',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#f0fdf4'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="success" 
-                  stroke="#10b981" 
-                  strokeWidth={4}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#047857', strokeWidth: 2 }}
-                  name="Score de réussite"
-                />
-              </LineChart>
-            </ResponsiveContainer>
             
-            {/* Mini stats */}
-            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-800">
+            {/* Métriques en bas du graphique */}
+            <div className="grid grid-cols-3 gap-6 mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">42</div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400">Score actuel</div>
+                <div className="text-2xl font-bold text-blue-600">{applicationData[applicationData.length - 1].sent}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Candidatures ce mois</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">+18%</div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400">Amélioration</div>
+                <div className="text-2xl font-bold text-emerald-600">{applicationData[applicationData.length - 1].responses}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Réponses obtenues</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">🎯</div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400">Objectif atteint</div>
+                <div className="text-2xl font-bold text-purple-600">{applicationData[applicationData.length - 1].efficiency}%</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400">Taux d'efficacité</div>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Activité hebdomadaire et statuts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <WeeklyActivity />
-        
-        {/* Répartition des statuts améliorée */}
-        <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-0 hover:shadow-xl transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
-              <Target className="h-5 w-5 text-indigo-600" />
-              Répartition des candidatures
-            </CardTitle>
-            <CardDescription className="text-indigo-600 dark:text-indigo-400">
-              Vue d'ensemble de vos candidatures
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1e1b4b',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#e0e7ff'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              {statusData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-4 h-4 rounded-full shadow-sm" 
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">{item.name}</span>
+          {/* Sidebar avec métriques et statuts */}
+          <div className="space-y-6">
+            {/* Statuts des candidatures */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-0 shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600">
+                    <Target className="h-5 w-5 text-white" />
                   </div>
-                  <span className="text-lg font-bold text-indigo-800 dark:text-indigo-200">{item.value}</span>
+                  Répartition
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#f1f5f9'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                
+                <div className="space-y-3 mt-4">
+                  {statusData.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full shadow-sm" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+            
+            {/* Tendance de réussite */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-0 shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600">
+                    <Activity className="h-5 w-5 text-white" />
+                  </div>
+                  Tendance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.3} />
+                    <XAxis 
+                      dataKey="week" 
+                      stroke="#64748b" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="#64748b" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#f1f5f9'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="success" 
+                      stroke="#10b981" 
+                      strokeWidth={3}
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#047857', strokeWidth: 2 }}
+                      name="Score de réussite"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                
+                <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/50 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Progression excellente</span>
+                    </div>
+                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                      +25% cette semaine
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-      {/* Section candidatures récentes et entretiens */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentApplications />
-        <UpcomingInterviews />
+        {/* Activité hebdomadaire */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <WeeklyActivity />
+          </div>
+          <div>
+            {/* Actions rapides compactes */}
+            <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-0 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
+                    <Sparkles className="h-5 w-5 text-white" />
+                  </div>
+                  Actions rapides
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full justify-start bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg">
+                  <Briefcase className="h-4 w-4 mr-3" />
+                  Nouvelle candidature
+                </Button>
+                <Button variant="outline" className="w-full justify-start border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+                  <Calendar className="h-4 w-4 mr-3" />
+                  Planifier entretien
+                </Button>
+                <Button variant="outline" className="w-full justify-start border-purple-200 text-purple-700 hover:bg-purple-50">
+                  <Users className="h-4 w-4 mr-3" />
+                  Ajouter contact
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Section candidatures récentes et entretiens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <RecentApplications />
+          <UpcomingInterviews />
+        </div>
       </div>
     </Layout>
   );
