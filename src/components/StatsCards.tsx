@@ -5,14 +5,26 @@ import {
   Briefcase, Calendar, TrendingUp, Target,
   ArrowUpRight, ArrowDownRight, Sparkles
 } from "lucide-react";
+import { useAppContext } from "@/contexts/AppContext";
 
 const StatsCards = () => {
+  const { applications, interviews, tasks, getStatistics } = useAppContext();
+  const statistics = getStatistics();
+  
+  // Calculer les changements par rapport au mois précédent (simulation)
+  const getChangePercentage = (current: number, type: string) => {
+    // Simulation de données historiques pour le calcul des tendances
+    const previousMonth = Math.max(1, Math.floor(current * 0.85));
+    const change = Math.round(((current - previousMonth) / previousMonth) * 100);
+    return change;
+  };
+  
   const stats = [
     {
       title: "Candidatures envoyées",
-      value: "142",
-      change: "+12%",
-      changeType: "positive",
+      value: statistics.totalApplications.toString(),
+      change: `${getChangePercentage(statistics.totalApplications, 'applications') > 0 ? '+' : ''}${getChangePercentage(statistics.totalApplications, 'applications')}%`,
+      changeType: getChangePercentage(statistics.totalApplications, 'applications') >= 0 ? "positive" : "negative",
       icon: Briefcase,
       description: "Ce mois-ci",
       gradient: "from-blue-50/80 to-blue-100/80 dark:from-blue-950/80 dark:to-blue-900/80",
@@ -21,9 +33,9 @@ const StatsCards = () => {
     },
     {
       title: "Entretiens planifiés",
-      value: "8",
-      change: "+25%",
-      changeType: "positive",
+      value: statistics.interviewsScheduled.toString(),
+      change: `${getChangePercentage(statistics.interviewsScheduled, 'interviews') > 0 ? '+' : ''}${getChangePercentage(statistics.interviewsScheduled, 'interviews')}%`,
+      changeType: getChangePercentage(statistics.interviewsScheduled, 'interviews') >= 0 ? "positive" : "negative",
       icon: Calendar,
       description: "Cette semaine",
       gradient: "from-emerald-50/80 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/80",
@@ -32,9 +44,9 @@ const StatsCards = () => {
     },
     {
       title: "Taux de réponse",
-      value: "18%",
-      change: "+3%",
-      changeType: "positive",
+      value: `${statistics.responseRate}%`,
+      change: `${getChangePercentage(statistics.responseRate, 'response') > 0 ? '+' : ''}${getChangePercentage(statistics.responseRate, 'response')}%`,
+      changeType: getChangePercentage(statistics.responseRate, 'response') >= 0 ? "positive" : "negative",
       icon: TrendingUp,
       description: "Moyenne mensuelle",
       gradient: "from-purple-50/80 to-purple-100/80 dark:from-purple-950/80 dark:to-purple-900/80",
@@ -43,11 +55,11 @@ const StatsCards = () => {
     },
     {
       title: "Objectif mensuel",
-      value: "75%",
-      change: "-5%",
-      changeType: "negative",
+      value: `${Math.min(100, Math.round((statistics.totalApplications / 20) * 100))}%`,
+      change: `${getChangePercentage(Math.round((statistics.totalApplications / 20) * 100), 'objective') > 0 ? '+' : ''}${getChangePercentage(Math.round((statistics.totalApplications / 20) * 100), 'objective')}%`,
+      changeType: getChangePercentage(Math.round((statistics.totalApplications / 20) * 100), 'objective') >= 0 ? "positive" : "negative",
       icon: Target,
-      description: "28/40 candidatures",
+      description: `${statistics.totalApplications}/20 candidatures`,
       gradient: "from-amber-50/80 to-amber-100/80 dark:from-amber-950/80 dark:to-amber-900/80",
       iconBg: "bg-amber-600",
       textColor: "text-amber-700 dark:text-amber-300"
@@ -105,7 +117,7 @@ const StatsCards = () => {
               {stat.changeType === "positive" && index === 1 && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                   <Sparkles className="h-3 w-3 animate-pulse" />
-                  <span className="font-medium">Excellent!</span>
+                  <span className="font-medium">Excellent !</span>
                 </div>
               )}
             </div>

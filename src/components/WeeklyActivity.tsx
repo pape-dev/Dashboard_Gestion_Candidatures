@@ -1,66 +1,58 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Users, Clock, CheckCircle } from "lucide-react";
+import { useAppContext } from "@/contexts/AppContext";
 
 const WeeklyActivity = () => {
-  const weekDays = [
-    {
-      day: "Lun",
-      date: "7",
-      applications: 3,
-      interviews: 1,
-      responses: 0,
-      isToday: false
-    },
-    {
-      day: "Mar",
-      date: "8",
-      applications: 2,
-      interviews: 0,
-      responses: 1,
-      isToday: false
-    },
-    {
-      day: "Mer",
-      date: "9",
-      applications: 4,
-      interviews: 2,
-      responses: 0,
-      isToday: false
-    },
-    {
-      day: "Jeu",
-      date: "10",
-      applications: 1,
-      interviews: 1,
-      responses: 2,
-      isToday: true
-    },
-    {
-      day: "Ven",
-      date: "11",
-      applications: 0,
-      interviews: 1,
-      responses: 0,
-      isToday: false
-    },
-    {
-      day: "Sam",
-      date: "12",
-      applications: 0,
-      interviews: 0,
-      responses: 0,
-      isToday: false
-    },
-    {
-      day: "Dim",
-      date: "13",
-      applications: 0,
-      interviews: 0,
-      responses: 0,
-      isToday: false
+  const { applications, interviews, tasks } = useAppContext();
+  
+  // Calculer l'activité réelle de la semaine
+  const getWeekActivity = () => {
+    const today = new Date();
+    const weekDays = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      
+      const dayApplications = applications.filter(app => {
+        const appDate = new Date(app.appliedDate);
+        return appDate.toDateString() === date.toDateString();
+      }).length;
+      
+      const dayInterviews = interviews.filter(interview => {
+        const interviewDate = new Date(interview.date);
+        return interviewDate.toDateString() === date.toDateString();
+      }).length;
+      
+      const dayTasks = tasks.filter(task => {
+        const taskDate = new Date(task.dueDate);
+        return taskDate.toDateString() === date.toDateString() && task.status === 'completed';
+      }).length;
+      
+      weekDays.push({
+        day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+        date: date.getDate().toString(),
+        applications: dayApplications,
+        interviews: dayInterviews,
+        responses: dayTasks,
+        isToday: date.toDateString() === today.toDateString()
+      });
     }
+    
+    return weekDays;
+  };
+  
+  const weekDays = [
+    ...getWeekActivity()
   ];
+
+  // Calculer les totaux de la semaine
+  const weekTotals = weekDays.reduce((acc, day) => ({
+    applications: acc.applications + day.applications,
+    interviews: acc.interviews + day.interviews,
+    responses: acc.responses + day.responses
+  }), { applications: 0, interviews: 0, responses: 0 });
 
   const getActivityLevel = (total: number) => {
     if (total === 0) return "bg-slate-100 dark:bg-slate-800";
@@ -145,7 +137,7 @@ const WeeklyActivity = () => {
             <div className="flex items-center justify-center gap-1 text-blue-600">
               <Users className="h-5 w-5" />
             </div>
-            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">10</div>
+            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{weekTotals.applications}</div>
             <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Candidatures</div>
           </div>
           
@@ -153,7 +145,7 @@ const WeeklyActivity = () => {
             <div className="flex items-center justify-center gap-1 text-emerald-600">
               <Clock className="h-5 w-5" />
             </div>
-            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">5</div>
+            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{weekTotals.interviews}</div>
             <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Entretiens</div>
           </div>
           
@@ -161,7 +153,7 @@ const WeeklyActivity = () => {
             <div className="flex items-center justify-center gap-1 text-green-600">
               <CheckCircle className="h-5 w-5" />
             </div>
-            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">3</div>
+            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{weekTotals.responses}</div>
             <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Réponses</div>
           </div>
         </div>

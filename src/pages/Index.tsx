@@ -17,10 +17,33 @@ import StatsCards from "@/components/StatsCards";
 import DashboardInsights from "@/components/DashboardInsights";
 import WeeklyActivity from "@/components/WeeklyActivity";
 import { useAppContext } from "@/contexts/AppContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Index = () => {
-  const { applications, interviews, getStatistics } = useAppContext();
+  const { applications, interviews, getStatistics, loading, refreshData } = useAppContext();
+  const { user } = useAuth();
   const stats = getStatistics();
+  
+  // Refresh data on mount
+  useEffect(() => {
+    refreshData();
+  }, []);
+  
+  // Loading state
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement du dashboard</h2>
+            <p className="text-slate-600 dark:text-slate-400">Préparation de vos données...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   // Données pour les graphiques avec calculs réels
   const applicationData = [
@@ -61,65 +84,65 @@ const Index = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 shadow-2xl">
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 shadow-2xl ring-4 ring-blue-500/20">
                     <Activity className="h-10 w-10 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 bg-clip-text text-transparent leading-tight">
-                      Dashboard Pro
+                    <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 bg-clip-text text-transparent leading-tight">
+                      Bonjour {user?.user_metadata?.first_name || 'Professionnel'}
                     </h1>
-                    <p className="text-xl text-slate-600 dark:text-slate-400 mt-2 max-w-2xl">
-                      Pilotez votre carrière avec intelligence artificielle
+                    <p className="text-lg lg:text-xl text-slate-600 dark:text-slate-400 mt-2 max-w-2xl">
+                      Pilotez votre recherche d'emploi avec intelligence
                     </p>
                   </div>
                 </div>
                 
                 {/* KPIs en temps réel */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900">
                         <Briefcase className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.totalApplications}</div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">Candidatures</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Candidatures</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900">
                         <Users className="h-5 w-5 text-emerald-600" />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.interviewsScheduled}</div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">Entretiens</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Entretiens</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900">
                         <TrendingUp className="h-5 w-5 text-amber-600" />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.responseRate}%</div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">Taux réponse</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Taux réponse</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900">
                         <Target className="h-5 w-5 text-purple-600" />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.activeApplications}</div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400">Actives</div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Actives</div>
                       </div>
                     </div>
                   </div>
@@ -128,11 +151,11 @@ const Index = () => {
               
               {/* Badge Premium */}
               <div className="hidden lg:block">
-                <div className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 dark:from-amber-900 dark:via-amber-800 dark:to-amber-900 rounded-2xl border border-amber-300 dark:border-amber-700 shadow-xl">
+                <div className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 dark:from-amber-900 dark:via-amber-800 dark:to-amber-900 rounded-2xl border border-amber-300 dark:border-amber-700 shadow-xl hover:shadow-2xl transition-all duration-300">
                   <Crown className="h-6 w-6 text-amber-600" />
                   <div>
-                    <div className="text-sm font-bold text-amber-800 dark:text-amber-200">Premium Dashboard</div>
-                    <div className="text-xs text-amber-700 dark:text-amber-300">Intelligence artificielle activée</div>
+                    <div className="text-base font-bold text-amber-800 dark:text-amber-200">JobTracker Pro</div>
+                    <div className="text-sm text-amber-700 dark:text-amber-300">Tableau de bord professionnel</div>
                   </div>
                 </div>
               </div>

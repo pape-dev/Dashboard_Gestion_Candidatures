@@ -21,6 +21,12 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -28,15 +34,23 @@ const LoginForm = () => {
       const { error } = await signIn(email, password);
       
       if (error) {
-        setError(error.message);
+        // Messages d'erreur plus conviviaux
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Email ou mot de passe incorrect');
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Veuillez confirmer votre email avant de vous connecter');
+        } else {
+          setError(error.message);
+        }
       } else {
         toast({
           title: "Connexion réussie",
-          description: "Bienvenue dans JobTracker Pro !",
+          description: "Bienvenue dans votre espace professionnel !",
         });
         navigate('/');
       }
     } catch (err) {
+      console.error('Erreur de connexion:', err);
       setError('Une erreur inattendue s\'est produite');
     } finally {
       setLoading(false);

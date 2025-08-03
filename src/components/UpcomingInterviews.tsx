@@ -4,58 +4,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock, MapPin, Video, Phone, Star, ArrowRight, Zap } from "lucide-react";
+import { useAppContext } from "@/contexts/AppContext";
 
 const UpcomingInterviews = () => {
-  const interviews = [
-    {
-      id: 1,
-      company: "TechCorp",
-      position: "Développeur Frontend",
-      date: "2024-01-20",
-      time: "14:00",
-      type: "Présentiel",
-      location: "Paris, France",
-      interviewer: "Marie Dupont",
-      interviewerAvatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=64&h=64&fit=crop&crop=center",
-      icon: MapPin,
-      priority: "high",
-      companyLogo: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=64&h=64&fit=crop&crop=center",
-      status: "confirmé",
-      duration: "1h"
-    },
-    {
-      id: 2,
-      company: "StartupXYZ",
-      position: "UX Designer",
-      date: "2024-01-22",
-      time: "10:30",
-      type: "Visioconférence",
-      location: "Zoom",
-      interviewer: "Pierre Martin",
-      interviewerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=center",
-      icon: Video,
-      priority: "medium",
-      companyLogo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64&h=64&fit=crop&crop=center",
-      status: "en attente",
-      duration: "45min"
-    },
-    {
-      id: 3,
-      company: "InnovLab",
-      position: "Product Manager",
-      date: "2024-01-25",
-      time: "16:00",
-      type: "Téléphone",
-      location: "Appel téléphonique",
-      interviewer: "Sophie Bernard",
-      interviewerAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=center",
-      icon: Phone,
-      priority: "high",
-      companyLogo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=64&h=64&fit=crop&crop=center",
-      status: "confirmé",
-      duration: "30min"
-    }
-  ];
+  const { interviews, applications } = useAppContext();
+  
+  // Filtrer et trier les entretiens à venir
+  const upcomingInterviews = interviews
+    .filter(interview => new Date(interview.date) >= new Date())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3)
+    .map(interview => {
+      const application = applications.find(app => app.id === interview.applicationId);
+      
+      return {
+        ...interview,
+        companyLogo: application?.logo || "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=64&h=64&fit=crop&crop=center",
+        interviewerAvatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=64&h=64&fit=crop&crop=center",
+        icon: interview.location.toLowerCase().includes('visio') || interview.location.toLowerCase().includes('zoom') || interview.location.toLowerCase().includes('teams') ? Video :
+              interview.location.toLowerCase().includes('téléphone') || interview.location.toLowerCase().includes('appel') ? Phone : MapPin,
+        priority: application?.priority || "medium"
+      };
+    });
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -200,15 +170,15 @@ const UpcomingInterviews = () => {
         <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
           <div className="grid grid-cols-3 gap-6 text-center">
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">3</div>
+              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{upcomingInterviews.length}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Cette semaine</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-blue-600">2</div>
+              <div className="text-2xl font-bold text-blue-600">{interviews.filter(i => i.status === 'confirmé').length}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Confirmés</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-amber-600">90%</div>
+              <div className="text-2xl font-bold text-amber-600">{interviews.length > 0 ? Math.round((interviews.filter(i => i.status === 'confirmé').length / interviews.length) * 100) : 0}%</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Taux de présence</div>
             </div>
           </div>
@@ -218,4 +188,4 @@ const UpcomingInterviews = () => {
   );
 };
 
-export default UpcomingInterviews;
+        {upcomingInterviews.map((interview) => (

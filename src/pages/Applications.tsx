@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
+import { useEffect } from "react";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,11 +32,18 @@ const Applications = () => {
   
   // Utilisation du contexte global
   const { 
-    applications, 
+    applications,
+    loading: contextLoading,
     updateApplication, 
     deleteApplication,
-    addApplication
+    addApplication,
+    refreshData
   } = useAppContext();
+
+  // Refresh data on mount
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const stats = {
     total: applications.length,
@@ -189,17 +197,51 @@ const Applications = () => {
   };
 
   const handleImportSuccess = (importedData: any[]) => {
-    // Ajouter les nouvelles candidatures importées
-    importedData.forEach((appData) => {
-      const { id, ...applicationWithoutId } = appData;
-      addApplication(applicationWithoutId);
-    });
-    
-    toast({
-      title: "Import réussi",
-      description: `${importedData.length} candidature(s) importée(s) avec succès.`,
-    });
+    try {
+      // Validation et ajout des nouvelles candidatures importées
+      importedData.forEach((appData) => {
+        const { id, ...applicationWithoutId } = appData;
+        
+        // Validation basique des données
+        if (!applicationWithoutId.company || !applicationWithoutId.position) {
+          throw new Error(`Données invalides pour la candidature: ${JSON.stringify(applicationWithoutId)}`);
+        }
+        
+        addApplication({
+          ...applicationWithoutId,
+          statusColor: applicationWithoutId.statusColor || "bg-blue-100 text-blue-800 border-blue-200",
+          tags: Array.isArray(applicationWithoutId.tags) ? applicationWithoutId.tags : [],
+        });
+      });
+      
+      toast({
+        title: "Import réussi",
+        description: `${importedData.length} candidature(s) importée(s) avec succès.`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'import:', error);
+      toast({
+        title: "Erreur d'import",
+        description: "Certaines candidatures n'ont pas pu être importées. Vérifiez le format des données.",
+        variant: "destructive",
+      });
+    }
   };
+
+  // Loading state
+  if (contextLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Chargement des candidatures...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Synchronisation en cours</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -425,22 +467,34 @@ const Applications = () => {
 
         {/* Empty State */}
         {sortedApplications.length === 0 && (
-          <Card className="text-center py-12 shadow-lg">
+          <Card className="text-center py-16 shadow-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
             <CardContent>
-              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune candidature trouvée</h3>
-              <p className="text-gray-600 mb-4">
+              <div className="max-w-md mx-auto">
+                <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900 w-fit mx-auto mb-6">
+                  <Building className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                  {searchTerm || selectedStatus !== "all" 
+                    ? "Aucune candidature trouvée" 
+                    : "Commencez votre recherche d'emploi"
+                  }
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
                 {searchTerm || selectedStatus !== "all" 
-                  ? "Aucune candidature ne correspond à vos critères de recherche."
-                  : "Commencez par ajouter votre première candidature."
+                    ? "Aucune candidature ne correspond à vos critères de recherche. Essayez de modifier vos filtres."
+                    : "Ajoutez votre première candidature pour commencer à organiser votre recherche d'emploi de manière professionnelle."
                 }
-              </p>
-              <ApplicationForm>
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
-                  <Plus className="h-4 w-4" />
-                  Ajouter une candidature
-                </Button>
-              </ApplicationForm>
+                </p>
+                <ApplicationForm>
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 px-6 py-3 text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Plus className="h-5 w-5" />
+                    {searchTerm || selectedStatus !== "all" 
+                      ? "Nouvelle candidature" 
+                      : "Créer ma première candidature"
+                    }
+                  </Button>
+                </ApplicationForm>
+              </div>
             </CardContent>
           </Card>
         )}

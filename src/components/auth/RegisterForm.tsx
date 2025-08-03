@@ -24,6 +24,12 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!firstName || !lastName || !email || !password) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -43,15 +49,25 @@ const RegisterForm = () => {
       const { error } = await signUp(email, password, firstName, lastName);
       
       if (error) {
-        setError(error.message);
+        // Messages d'erreur plus conviviaux
+        if (error.message.includes('User already registered')) {
+          setError('Un compte existe déjà avec cet email');
+        } else if (error.message.includes('Password should be at least')) {
+          setError('Le mot de passe doit contenir au moins 6 caractères');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Adresse email invalide');
+        } else {
+          setError(error.message);
+        }
       } else {
         toast({
           title: "Compte créé avec succès",
-          description: "Bienvenue dans JobTracker Pro ! Vous pouvez maintenant commencer à gérer vos candidatures.",
+          description: "Bienvenue ! Votre compte a été créé avec succès.",
         });
         navigate('/');
       }
     } catch (err) {
+      console.error('Erreur d\'inscription:', err);
       setError('Une erreur inattendue s\'est produite');
     } finally {
       setLoading(false);

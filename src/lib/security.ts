@@ -95,15 +95,23 @@ export const handleSupabaseError = (error: any, context: string = 'Opération'):
       case '42703': // Column doesn't exist
         userMessage = 'Erreur de configuration de la base de données';
         break;
+      case 'PGRST301': // JWT expired
+        userMessage = 'Session expirée, veuillez vous reconnecter';
+        break;
+      case 'PGRST302': // JWT invalid
+        userMessage = 'Session invalide, veuillez vous reconnecter';
+        break;
       default:
         userMessage = error.message || 'Une erreur de base de données est survenue';
     }
+  } else if (error?.message?.includes('Failed to fetch')) {
+    userMessage = 'Problème de connexion réseau. Vérifiez votre connexion internet.';
   } else if (error?.message) {
     userMessage = error.message;
   }
 
   toast({
-    title: "Erreur",
+    title: `Erreur - ${context}`,
     description: userMessage,
     variant,
   });

@@ -3,8 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Calendar, FileText, Users, Target, Zap, Sparkles } from "lucide-react";
+import { useAppContext } from "@/contexts/AppContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const QuickActions = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { getStatistics } = useAppContext();
+  const stats = getStatistics();
+  
   const actions = [
     {
       title: "Nouvelle candidature",
@@ -12,7 +20,7 @@ const QuickActions = () => {
       icon: Plus,
       gradient: "from-blue-500 to-blue-600",
       hoverGradient: "hover:from-blue-600 hover:to-blue-700",
-      action: () => console.log("Nouvelle candidature"),
+      action: () => navigate("/applications"),
       badge: "Rapide",
       badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
     },
@@ -22,7 +30,7 @@ const QuickActions = () => {
       icon: Search,
       gradient: "from-emerald-500 to-emerald-600",
       hoverGradient: "hover:from-emerald-600 hover:to-emerald-700",
-      action: () => console.log("Chercher emplois"),
+      action: () => navigate("/job-search"),
       badge: "IA",
       badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
     },
@@ -32,7 +40,7 @@ const QuickActions = () => {
       icon: Calendar,
       gradient: "from-purple-500 to-purple-600",
       hoverGradient: "hover:from-purple-600 hover:to-purple-700",
-      action: () => console.log("Planifier entretien"),
+      action: () => navigate("/calendar"),
       badge: "Urgent",
       badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
     },
@@ -42,7 +50,7 @@ const QuickActions = () => {
       icon: FileText,
       gradient: "from-amber-500 to-amber-600",
       hoverGradient: "hover:from-amber-600 hover:to-amber-700",
-      action: () => console.log("Mettre à jour CV"),
+      action: () => navigate("/profile"),
       badge: "Pro",
       badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
     },
@@ -52,7 +60,7 @@ const QuickActions = () => {
       icon: Users,
       gradient: "from-pink-500 to-pink-600",
       hoverGradient: "hover:from-pink-600 hover:to-pink-700",
-      action: () => console.log("Ajouter contact"),
+      action: () => navigate("/contacts"),
       badge: "Réseau",
       badgeColor: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300"
     },
@@ -62,7 +70,7 @@ const QuickActions = () => {
       icon: Target,
       gradient: "from-indigo-500 to-indigo-600",
       hoverGradient: "hover:from-indigo-600 hover:to-indigo-700",
-      action: () => console.log("Créer tâche"),
+      action: () => navigate("/tasks"),
       badge: "Suivi",
       badgeColor: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
     }
@@ -129,15 +137,15 @@ const QuickActions = () => {
         <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
           <div className="grid grid-cols-3 gap-6 text-center">
             <div className="space-y-1">
-              <div className="text-3xl font-bold text-slate-700 dark:text-slate-300">47</div>
+              <div className="text-3xl font-bold text-slate-700 dark:text-slate-300">{stats.totalApplications}</div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Actions cette semaine</div>
             </div>
             <div className="space-y-1">
-              <div className="text-3xl font-bold text-emerald-600">12</div>
+              <div className="text-3xl font-bold text-emerald-600">{stats.activeApplications}</div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Objectifs atteints</div>
             </div>
             <div className="space-y-1">
-              <div className="text-3xl font-bold text-blue-600">89%</div>
+              <div className="text-3xl font-bold text-blue-600">{stats.responseRate}%</div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Taux de réalisation</div>
             </div>
           </div>

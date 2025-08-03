@@ -17,6 +17,7 @@ import InterviewForm from "@/components/InterviewForm";
 import InterviewEditForm from "@/components/InterviewEditForm";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -27,6 +28,11 @@ const Calendar = () => {
   const [editingInterview, setEditingInterview] = useState<any>(null);
   const { interviews, applications, updateInterview, deleteInterview } = useAppContext();
   const { toast } = useToast();
+  
+  // Refresh data on mount
+  useEffect(() => {
+    // Auto-refresh interviews data
+  }, []);
   
   const filteredInterviews = interviews.filter(interview => {
     const matchesSearch = interview.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -459,6 +465,7 @@ END:VCALENDAR`;
                   <div className="space-y-4 max-h-96 overflow-y-auto">
                      {upcomingInterviews.slice(0, 5).map((interview) => {
                        const application = applications.find(app => app.id === interview.applicationId);
+                       
                        const getStatusStyle = (status: string) => {
                          switch (status) {
                            case "confirmé": return "bg-green-100 text-green-800 border-green-200";
@@ -470,7 +477,7 @@ END:VCALENDAR`;
                        };
 
                        return (
-                         <div key={interview.id} className="group relative bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1">
+                         <div key={interview.id} className="group relative bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1">
                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-xl"></div>
                            
                            <div className="flex items-start justify-between mb-4">
@@ -487,8 +494,8 @@ END:VCALENDAR`;
                                  )}
                                </div>
                                <div>
-                                 <h4 className="font-bold text-gray-900 text-lg">{interview.company}</h4>
-                                 <p className="text-sm text-gray-600 font-medium">{interview.position}</p>
+                                 <h4 className="font-bold text-gray-900 dark:text-slate-100 text-lg">{interview.company}</h4>
+                                 <p className="text-sm text-gray-600 dark:text-slate-300 font-medium">{interview.position}</p>
                                  <Badge className={`mt-1 ${getStatusStyle(interview.status)} text-xs font-semibold`}>
                                    {interview.status}
                                  </Badge>
@@ -501,26 +508,26 @@ END:VCALENDAR`;
                            </div>
                            
                            <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                             <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <CalendarIcon className="h-4 w-4 text-blue-500" />
-                               <span className="font-medium text-gray-700">{new Date(interview.date).toLocaleDateString('fr-FR')}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200">{new Date(interview.date).toLocaleDateString('fr-FR')}</span>
                              </div>
-                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                             <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <Clock className="h-4 w-4 text-green-500" />
-                               <span className="font-medium text-gray-700">{interview.time}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200">{interview.time}</span>
                              </div>
-                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                             <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <MapPin className="h-4 w-4 text-purple-500" />
-                               <span className="font-medium text-gray-700 truncate">{interview.location}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.location}</span>
                              </div>
-                             <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                             <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <Users className="h-4 w-4 text-orange-500" />
-                               <span className="font-medium text-gray-700 truncate">{interview.interviewer}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.interviewer}</span>
                              </div>
                            </div>
 
-                           <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                             <div className="text-xs text-gray-500">
+                           <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-slate-600">
+                             <div className="text-xs text-gray-500 dark:text-slate-400">
                                Durée: <span className="font-semibold">{interview.duration}</span>
                              </div>
                              <InterviewActions

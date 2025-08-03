@@ -30,11 +30,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useAppContext } from "@/contexts/AppContext";
+import { useToast } from "@/hooks/use-toast";
+
+const applicationSchema = z.object({
+  company: z.string().min(1, "Le nom de l'entreprise est requis"),
+  position: z.string().min(1, "Le poste est requis"),
+  location: z.string().optional(),
+  salary: z.string().optional(),
+  status: z.string().default("En cours"),
+  appliedDate: z.date(),
+  description: z.string().optional(),
+  contactPerson: z.string().optional(),
+  contactEmail: z.string().email("Email invalide").optional().or(z.literal("")),
+  jobUrl: z.string().url("URL invalide").optional().or(z.literal("")),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  tags: z.string().optional(),
+});
+
+type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 interface ApplicationFormData {
   company: string;
@@ -58,7 +79,11 @@ interface ApplicationFormProps {
 
 const ApplicationForm = ({ children, onSubmit }: ApplicationFormProps) => {
   const [open, setOpen] = useState(false);
+  const { addApplication } = useAppContext();
+  const { toast } = useToast();
+  
   const form = useForm<ApplicationFormData>({
+    resolver: zodResolver(applicationSchema),
     defaultValues: {
       company: "",
       position: "",
@@ -76,10 +101,40 @@ const ApplicationForm = ({ children, onSubmit }: ApplicationFormProps) => {
   });
 
   const handleSubmit = (data: ApplicationFormData) => {
-    console.log("Nouvelle candidature:", data);
-    onSubmit?.(data);
-    setOpen(false);
-    form.reset();
+    try {
+      const applicationData = {
+        company: data.company,
+        position: data.position,
+        location: data.location || "",
+        status: data.status,
+        appliedDate: data.appliedDate.toISOString().split('T')[0],
+        salary: data.salary || "",
+        description: data.description || "",
+        priority: data.priority,
+        contactPerson: data.contactPerson || "",
+        contactEmail: data.contactEmail || "",
+        nextStep: "Candidature envoyée",
+        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        statusColor: "bg-blue-100 text-blue-800 border-blue-200"
+      };
+      
+      addApplication(applicationData);
+      onSubmit?.(data);
+      setOpen(false);
+      form.reset();
+      
+      toast({
+        title: "Candidature créée",
+        description: `Candidature pour ${data.position} chez ${data.company} ajoutée avec succès`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de la candidature:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la candidature",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

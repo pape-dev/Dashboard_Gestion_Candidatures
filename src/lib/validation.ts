@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 // Schémas de validation pour les profils
 export const profileSchema = z.object({
-  first_name: z.string().min(1, "Le prénom est requis").max(50, "Le prénom ne peut pas dépasser 50 caractères"),
-  last_name: z.string().min(1, "Le nom est requis").max(50, "Le nom ne peut pas dépasser 50 caractères"),
-  title: z.string().min(1, "Le titre professionnel est requis").max(100, "Le titre ne peut pas dépasser 100 caractères"),
+  first_name: z.string().min(1, "Le prénom est requis").max(50, "Le prénom ne peut pas dépasser 50 caractères").trim(),
+  last_name: z.string().min(1, "Le nom est requis").max(50, "Le nom ne peut pas dépasser 50 caractères").trim(),
+  title: z.string().min(1, "Le titre professionnel est requis").max(100, "Le titre ne peut pas dépasser 100 caractères").trim(),
   bio: z.string().max(500, "La bio ne peut pas dépasser 500 caractères").optional(),
-  phone: z.string().regex(/^[\+]?[1-9][\d]{0,15}$/, "Numéro de téléphone invalide").optional(),
+  phone: z.string().regex(/^[\+]?[1-9][\d]{0,15}$/, "Numéro de téléphone invalide").optional().or(z.literal("")),
   location: z.string().max(100, "La localisation ne peut pas dépasser 100 caractères").optional(),
   website: z.string().url("URL invalide").optional().or(z.literal("")),
   linkedin_url: z.string().url("URL LinkedIn invalide").optional().or(z.literal("")),
@@ -24,11 +24,11 @@ export const profileSchema = z.object({
 
 // Schéma pour les expériences
 export const experienceSchema = z.object({
-  title: z.string().min(1, "Le titre du poste est requis").max(100, "Le titre ne peut pas dépasser 100 caractères"),
-  company: z.string().min(1, "Le nom de l'entreprise est requis").max(100, "Le nom de l'entreprise ne peut pas dépasser 100 caractères"),
+  title: z.string().min(1, "Le titre du poste est requis").max(100, "Le titre ne peut pas dépasser 100 caractères").trim(),
+  company: z.string().min(1, "Le nom de l'entreprise est requis").max(100, "Le nom de l'entreprise ne peut pas dépasser 100 caractères").trim(),
   location: z.string().max(100, "La localisation ne peut pas dépasser 100 caractères").optional(),
   start_date: z.string().min(1, "La date de début est requise"),
-  end_date: z.string().optional(),
+  end_date: z.string().optional().nullable(),
   is_current: z.boolean().default(false),
   description: z.string().max(1000, "La description ne peut pas dépasser 1000 caractères").optional(),
   achievements: z.array(z.string()).optional(),
@@ -37,7 +37,7 @@ export const experienceSchema = z.object({
 
 // Schéma pour les compétences
 export const skillSchema = z.object({
-  skill_name: z.string().min(1, "Le nom de la compétence est requis").max(50, "Le nom de la compétence ne peut pas dépasser 50 caractères"),
+  skill_name: z.string().min(1, "Le nom de la compétence est requis").max(50, "Le nom de la compétence ne peut pas dépasser 50 caractères").trim(),
   level: z.number().min(1, "Le niveau doit être entre 1 et 5").max(5, "Le niveau doit être entre 1 et 5"),
   category: z.string().max(50, "La catégorie ne peut pas dépasser 50 caractères").optional(),
   years_of_experience: z.number().min(0, "L'expérience ne peut pas être négative").max(50, "Valeur d'expérience invalide").optional(),
@@ -45,7 +45,7 @@ export const skillSchema = z.object({
 
 // Schéma pour les documents
 export const documentSchema = z.object({
-  name: z.string().min(1, "Le nom du document est requis").max(100, "Le nom ne peut pas dépasser 100 caractères"),
+  name: z.string().min(1, "Le nom du document est requis").max(100, "Le nom ne peut pas dépasser 100 caractères").trim(),
   type: z.enum(["cv", "portfolio", "certificate", "other"]),
   description: z.string().max(500, "La description ne peut pas dépasser 500 caractères").optional(),
   is_public: z.boolean().default(false),
@@ -69,6 +69,11 @@ export const fileValidationSchema = z.object({
 export const validateFile = (file: File, maxSize: number = 10 * 1024 * 1024, allowedTypes: string[] = ["image/jpeg", "image/png", "image/webp", "application/pdf"]) => {
   const errors: string[] = [];
 
+  if (!file) {
+    errors.push('Aucun fichier sélectionné');
+    return { isValid: false, errors };
+  }
+
   if (file.size > maxSize) {
     errors.push(`Le fichier est trop volumineux. Taille maximum: ${Math.round(maxSize / 1024 / 1024)}MB`);
   }
@@ -85,18 +90,24 @@ export const validateFile = (file: File, maxSize: number = 10 * 1024 * 1024, all
 
 // Fonction pour sanitizer les entrées utilisateur
 export const sanitizeInput = (input: string): string => {
+  if (!input || typeof input !== 'string') return '';
+  
   return input
     .trim()
     .replace(/[<>]/g, "") // Supprimer les balises HTML basiques
     .replace(/javascript:/gi, "") // Supprimer les protocoles dangereux
-    .replace(/on\w+=/gi, ""); // Supprimer les événements JavaScript
+    .replace(/on\w+=/gi, "") // Supprimer les événements JavaScript
+    .replace(/data:/gi, "") // Supprimer les URLs data
+    .slice(0, 1000); // Limiter la longueur
 };
 
 // Fonction pour valider une URL
 export const validateUrl = (url: string): boolean => {
+  if (!url) return false;
+  
   try {
-    new URL(url);
-    return true;
+    const urlObj = new URL(url);
+    return ['http:', 'https:'].includes(urlObj.protocol);
   } catch {
     return false;
   }
@@ -104,12 +115,65 @@ export const validateUrl = (url: string): boolean => {
 
 // Fonction pour formater un numéro de téléphone
 export const formatPhoneNumber = (phone: string): string => {
+  if (!phone) return '';
+  
   const cleaned = phone.replace(/\D/g, "");
+  
+  // Format français
+  if (cleaned.startsWith('33')) {
+    const withoutCountry = cleaned.slice(2);
+    const match = withoutCountry.match(/^(\d{1})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+    if (match) {
+      return `+33 ${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
+    }
+  }
+  
+  // Format US
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
   if (match) {
     return `(${match[1]}) ${match[2]}-${match[3]}`;
   }
+  
   return phone;
+};
+
+// Validation d'email améliorée
+export const validateEmail = (email: string): boolean => {
+  if (!email) return false;
+  
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return emailRegex.test(email) && email.length <= 254;
+};
+
+// Validation de mot de passe
+export const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  if (!password) {
+    errors.push('Le mot de passe est requis');
+    return { isValid: false, errors };
+  }
+  
+  if (password.length < 8) {
+    errors.push('Le mot de passe doit contenir au moins 8 caractères');
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Le mot de passe doit contenir au moins une majuscule');
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push('Le mot de passe doit contenir au moins une minuscule');
+  }
+  
+  if (!/\d/.test(password)) {
+    errors.push('Le mot de passe doit contenir au moins un chiffre');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 };
 
 // Types exportés

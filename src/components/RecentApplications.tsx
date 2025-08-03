@@ -6,73 +6,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building, Calendar, ExternalLink, TrendingUp, Sparkles, ArrowRight, Clock } from "lucide-react";
 
 const RecentApplications = () => {
-  const applications = [
-    {
-      id: 1,
-      company: "TechCorp",
-      position: "Développeur Frontend",
-      status: "En cours",
-      appliedDate: "2024-01-15",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300",
-      companyLogo: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=64&h=64&fit=crop&crop=center",
-      salary: "55-65k €",
-      progress: 75,
-      priority: "high",
-      nextAction: "Entretien technique"
-    },
-    {
-      id: 2,
-      company: "StartupXYZ",
-      position: "UX Designer",
-      status: "Entretien",
-      appliedDate: "2024-01-12",
-      statusColor: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900 dark:text-emerald-300",
-      companyLogo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64&h=64&fit=crop&crop=center",
-      salary: "45-55k €",
-      progress: 90,
-      priority: "high",
-      nextAction: "2ème tour"
-    },
-    {
-      id: 3,
-      company: "DataCorp",
-      position: "Data Analyst",
-      status: "Refusé",
-      appliedDate: "2024-01-10",
-      statusColor: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-300",
-      companyLogo: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=64&h=64&fit=crop&crop=center",
-      salary: "40-50k €",
-      progress: 25,
-      priority: "low",
-      nextAction: "Feedback reçu"
-    },
-    {
-      id: 4,
-      company: "InnovLab",
-      position: "Product Manager",
-      status: "En attente",
-      appliedDate: "2024-01-08",
-      statusColor: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900 dark:text-amber-300",
-      companyLogo: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=64&h=64&fit=crop&crop=center",
-      salary: "60-70k €",
-      progress: 35,
-      priority: "medium",
-      nextAction: "Relance prévue"
-    },
-    {
-      id: 5,
-      company: "WebAgency",
-      position: "Développeur Full Stack",
-      status: "En cours",
-      appliedDate: "2024-01-05",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300",
-      companyLogo: "https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=64&h=64&fit=crop&crop=center",
-      salary: "50-60k €",
-      progress: 60,
-      priority: "medium",
-      nextAction: "Test technique"
+  const { applications } = useAppContext();
+  
+  // Prendre les 5 candidatures les plus récentes
+  const recentApplications = applications
+    .sort((a, b) => new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime())
+    .slice(0, 5)
+    .map(app => ({
+      ...app,
+      companyLogo: app.logo,
+      progress: getProgressFromStatus(app.status),
+      nextAction: app.nextStep || "En attente"
+    }));
+
+  function getProgressFromStatus(status: string): number {
+    switch (status) {
+      case "En cours": return 25;
+      case "Entretien": return 75;
+      case "Accepté": return 100;
+      case "Refusé": return 15;
+      case "En attente": return 50;
+      default: return 0;
     }
-  ];
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -201,15 +157,15 @@ const RecentApplications = () => {
         <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-700/50">
           <div className="grid grid-cols-3 gap-6 text-center">
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">5</div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{applications.length}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Cette semaine</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-emerald-600">2</div>
+              <div className="text-2xl font-bold text-emerald-600">{applications.filter(app => ['En cours', 'Entretien'].includes(app.status)).length}</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">En cours</div>
             </div>
             <div className="space-y-1">
-              <div className="text-2xl font-bold text-amber-600">60%</div>
+              <div className="text-2xl font-bold text-amber-600">{Math.round((applications.filter(app => app.status !== 'En attente').length / Math.max(applications.length, 1)) * 100)}%</div>
               <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Taux de progression</div>
             </div>
           </div>
@@ -219,4 +175,4 @@ const RecentApplications = () => {
   );
 };
 
-export default RecentApplications;
+        {recentApplications.map((app) => (

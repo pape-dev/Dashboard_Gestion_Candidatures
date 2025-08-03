@@ -62,7 +62,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
         open ? "w-64" : "w-16",
         // Mobile
         "lg:translate-x-0",
-        mobileOpen ? "translate-x-0 block w-64" : "-translate-x-full"
+        mobileOpen ? "translate-x-0 block w-64" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -93,7 +93,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
 
         {/* User Profile Section */}
         {(open || mobileOpen) && user && (
-          <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 bg-gradient-to-r from-blue-50/30 to-purple-50/30 dark:from-blue-950/30 dark:to-purple-950/30">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12 ring-2 ring-blue-500/30 shadow-lg">
                 <AvatarImage src={user.user_metadata?.avatar_url} />
@@ -103,7 +103,10 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
-                  {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                  {user.user_metadata?.first_name && user.user_metadata?.last_name 
+                    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+                    : user.email?.split('@')[0] || 'Utilisateur'
+                  }
                 </p>
                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                   {user.email}
@@ -135,6 +138,18 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <item.icon className="h-5 w-5 flex-shrink-0" />
                   {(open || mobileOpen) && <span>{item.name}</span>}
+                  
+                  {/* Badge pour les notifications */}
+                  {item.name === "Candidatures" && (open || mobileOpen) && (
+                    <Badge className="ml-auto bg-blue-500 text-white text-xs px-2 py-1">
+                      4
+                    </Badge>
+                  )}
+                  {item.name === "Calendrier" && (open || mobileOpen) && (
+                    <Badge className="ml-auto bg-green-500 text-white text-xs px-2 py-1">
+                      2
+                    </Badge>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -165,7 +180,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
             variant="ghost"
             onClick={handleSignOut}
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/50 transition-all duration-300 relative overflow-hidden",
+              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/50 transition-all duration-300 relative overflow-hidden mt-2",
               !(open || mobileOpen) && "justify-center"
             )}
           >

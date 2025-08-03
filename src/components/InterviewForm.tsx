@@ -8,6 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, MapPin, Users, Plus } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const interviewSchema = z.object({
+  applicationId: z.string().optional(),
+  company: z.string().min(1, "Le nom de l'entreprise est requis"),
+  position: z.string().min(1, "Le poste est requis"),
+  date: z.string().min(1, "La date est requise"),
+  time: z.string().min(1, "L'heure est requise"),
+  type: z.string().optional(),
+  location: z.string().optional(),
+  interviewer: z.string().optional(),
+  duration: z.string().optional(),
+  status: z.string().default("à confirmer"),
+  notes: z.string().optional(),
+  meetingLink: z.string().url("URL invalide").optional().or(z.literal("")),
+});
+
+type InterviewFormData = z.infer<typeof interviewSchema>;
 
 interface InterviewFormProps {
   trigger?: React.ReactNode;
@@ -15,7 +34,7 @@ interface InterviewFormProps {
 
 const InterviewForm = ({ trigger }: InterviewFormProps) => {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<InterviewFormData>({
     applicationId: "",
     company: "",
     position: "",
@@ -36,58 +55,63 @@ const InterviewForm = ({ trigger }: InterviewFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation basique
-    if (!formData.company || !formData.position || !formData.date || !formData.time) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive",
+    try {
+      // Validation avec Zod
+      const validatedData = interviewSchema.parse(formData);
+      
+      // Trouver l'application correspondante si sélectionnée
+      const selectedApp = applications.find(app => app.id.toString() === validatedData.applicationId);
+      
+      const newInterview = {
+        applicationId: validatedData.applicationId ? parseInt(validatedData.applicationId) : 0,
+        company: selectedApp ? selectedApp.company : validatedData.company,
+        position: selectedApp ? selectedApp.position : validatedData.position,
+        date: validatedData.date,
+        time: validatedData.time,
+        type: validatedData.type || "Entretien RH",
+        location: validatedData.location || "",
+        interviewer: validatedData.interviewer || "",
+        duration: validatedData.duration || "1h",
+        status: validatedData.status,
+        notes: validatedData.notes || "",
+        meetingLink: validatedData.meetingLink || ""
+      };
+
+      addInterview(newInterview);
+      
+      // Reset form
+      setFormData({
+        applicationId: "",
+        company: "",
+        position: "",
+        date: "",
+        time: "",
+        type: "",
+        location: "",
+        interviewer: "",
+        duration: "",
+        status: "à confirmer",
+        notes: "",
+        meetingLink: ""
       });
-      return;
+      
+      setOpen(false);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({
+          title: "Erreur de validation",
+          description: firstError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer l'entretien",
+          variant: "destructive",
+        });
+      }
     }
-
-    // Trouver l'application correspondante si sélectionnée
-    const selectedApp = applications.find(app => app.id.toString() === formData.applicationId);
-    
-    const newInterview = {
-      applicationId: formData.applicationId ? parseInt(formData.applicationId) : 0,
-      company: selectedApp ? selectedApp.company : formData.company,
-      position: selectedApp ? selectedApp.position : formData.position,
-      date: formData.date,
-      time: formData.time,
-      type: formData.type,
-      location: formData.location,
-      interviewer: formData.interviewer,
-      duration: formData.duration,
-      status: formData.status,
-      notes: formData.notes,
-      meetingLink: formData.meetingLink
-    };
-
-    addInterview(newInterview);
-    
-    toast({
-      title: "Entretien créé",
-      description: `Nouvel entretien planifié avec ${newInterview.company}`,
-    });
-
-    // Reset form
-    setFormData({
-      applicationId: "",
-      company: "",
-      position: "",
-      date: "",
-      time: "",
-      type: "",
-      location: "",
-      interviewer: "",
-      duration: "",
-      status: "à confirmer",
-      notes: "",
-      meetingLink: ""
-    });
-    
-    setOpen(false);
   };
 
   const handleApplicationSelect = (appId: string) => {

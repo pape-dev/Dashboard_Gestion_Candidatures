@@ -73,13 +73,15 @@ const ApplicationActions = ({
   const { toast } = useToast();
 
   const handleDelete = () => {
-    console.log(`Suppression de la candidature ${application.id}`);
-    onDelete?.(application.id);
-    toast({
-      title: "Candidature supprimée",
-      description: `La candidature pour ${application.position} chez ${application.company} a été supprimée.`,
-      variant: "destructive",
-    });
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer la candidature pour ${application.position} chez ${application.company} ?`)) {
+      console.log(`Suppression de la candidature ${application.id}`);
+      onDelete?.(application.id);
+      toast({
+        title: "Candidature supprimée",
+        description: `La candidature pour ${application.position} chez ${application.company} a été supprimée.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEdit = () => {
@@ -107,16 +109,32 @@ const ApplicationActions = ({
   };
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Candidature - ${application.position}`);
-    const body = encodeURIComponent(`Bonjour ${application.contactPerson},\n\nJe me permets de vous recontacter concernant ma candidature pour le poste de ${application.position}.\n\nCordialement`);
-    window.open(`mailto:${application.contactEmail}?subject=${subject}&body=${body}`);
+    if (application.contactEmail) {
+      const subject = encodeURIComponent(`Candidature - ${application.position}`);
+      const body = encodeURIComponent(`Bonjour ${application.contactPerson || 'Madame, Monsieur'},\n\nJe me permets de vous recontacter concernant ma candidature pour le poste de ${application.position} chez ${application.company}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement`);
+      window.open(`mailto:${application.contactEmail}?subject=${subject}&body=${body}`);
+    } else {
+      toast({
+        title: "Email non disponible",
+        description: "Aucune adresse email de contact n'est renseignée pour cette candidature",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCall = () => {
-    toast({
-      title: "Fonction d'appel",
-      description: "Cette fonctionnalité sera disponible prochainement",
-    });
+    if (application.contactPerson) {
+      toast({
+        title: "Préparation de l'appel",
+        description: `Prêt à appeler ${application.contactPerson} chez ${application.company}`,
+      });
+    } else {
+      toast({
+        title: "Contact non disponible",
+        description: "Aucun contact téléphonique n'est renseigné pour cette candidature",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewOffer = () => {
