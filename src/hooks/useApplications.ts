@@ -50,6 +50,7 @@ export const useApplications = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -72,6 +73,7 @@ export const useApplications = () => {
       setApplications(data || []);
     } catch (error) {
       console.error('Error fetching applications:', error);
+      setError('Impossible de charger les candidatures');
       toast({
         title: "Erreur",
         description: "Impossible de charger les candidatures",
@@ -281,6 +283,7 @@ export const useApplications = () => {
     applications,
     interviews,
     loading,
+    error,
     addApplication,
     updateApplication,
     deleteApplication,

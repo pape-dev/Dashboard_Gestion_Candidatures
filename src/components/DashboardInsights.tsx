@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Brain, Lightbulb, AlertTriangle, Trophy, 
-  Zap, Clock, CheckCircle, TrendingUp
+  Zap, Clock, CheckCircle, TrendingUp, Sparkles
 } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
 

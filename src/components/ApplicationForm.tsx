@@ -57,21 +57,6 @@ const applicationSchema = z.object({
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
 
-interface ApplicationFormData {
-  company: string;
-  position: string;
-  location: string;
-  salary: string;
-  status: string;
-  appliedDate: Date;
-  description: string;
-  contactPerson: string;
-  contactEmail: string;
-  jobUrl: string;
-  priority: string;
-  tags: string;
-}
-
 interface ApplicationFormProps {
   children: React.ReactNode;
   onSubmit?: (data: ApplicationFormData) => void;
