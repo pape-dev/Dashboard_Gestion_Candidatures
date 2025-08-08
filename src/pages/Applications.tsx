@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Building, Plus, Download, Upload, Filter, Settings,
   BarChart3, Calendar, Users, Target, TrendingUp, Sparkles,
-  FileText, Zap, Globe, Brain
+  FileText, Zap, Globe, Brain, Loader2
 } from "lucide-react";
 import ApplicationForm from "@/components/ApplicationForm";
 import ApplicationsStats from "@/components/ApplicationsStats";
@@ -19,28 +19,25 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
-import { useEffect } from "react";
 
 const Applications = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [sortBy, setSortBy] = useState("date");
+  const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [selectedApps, setSelectedApps] = useState<number[]>([]);
+  const [selectedApps, setSelectedApps] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"cards" | "table" | "timeline">("cards");
   const { toast } = useToast();
   
-  // Utilisation du contexte global
   const { 
     applications,
-    loading: contextLoading,
+    loading,
+    error,
     updateApplication, 
     deleteApplication,
-    addApplication,
     refreshData
   } = useAppContext();
 
-  // Refresh data on mount
   useEffect(() => {
     refreshData();
   }, []);
@@ -55,8 +52,7 @@ const Applications = () => {
 
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                         app.position.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === "all" || app.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -64,17 +60,17 @@ const Applications = () => {
   const sortedApplications = [...filteredApplications].sort((a, b) => {
     let aValue, bValue;
     switch (sortBy) {
-      case "date":
-        aValue = new Date(a.appliedDate).getTime();
-        bValue = new Date(b.appliedDate).getTime();
+      case "created_at":
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
         break;
       case "company":
         aValue = a.company.toLowerCase();
         bValue = b.company.toLowerCase();
         break;
-      case "salary":
-        aValue = parseInt(a.salary.split("-")[0]);
-        bValue = parseInt(b.salary.split("-")[0]);
+      case "salary_min":
+        aValue = a.salary_min || 0;
+        bValue = b.salary_min || 0;
         break;
       default:
         return 0;
@@ -87,7 +83,7 @@ const Applications = () => {
     }
   });
 
-  const handleSelectApp = (appId: number) => {
+  const handleSelectApp = (appId: string) => {
     setSelectedApps(prev => 
       prev.includes(appId) 
         ? prev.filter(id => id !== appId)
@@ -103,140 +99,66 @@ const Applications = () => {
     }
   };
 
-  const handleBulkAction = (action: string) => {
-    toast({
-      title: "Action groupée",
-      description: `Action "${action}" appliquée à ${selectedApps.length} candidature(s)`,
-    });
-    console.log(`Action groupée: ${action} sur les candidatures:`, selectedApps);
-  };
-
-  const handleExportData = () => {
-    const dataToExport = sortedApplications.map(app => ({
-      ...app,
-      exportDate: new Date().toISOString()
-    }));
-    
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `candidatures-export-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Export réussi",
-      description: `${sortedApplications.length} candidature(s) exportée(s)`,
-    });
-  };
-
-  const handleImportData = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const data = JSON.parse(e.target?.result as string);
-            console.log('Données importées:', data);
-            toast({
-              title: "Import réussi",
-              description: "Les candidatures ont été importées avec succès",
-            });
-          } catch (error) {
-            toast({
-              title: "Erreur d'import",
-              description: "Le fichier n'est pas valide",
-              variant: "destructive",
-            });
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleViewAnalytics = () => {
-    toast({
-      title: "Analyse des données",
-      description: "Ouverture du tableau de bord analytique...",
-    });
-  };
-
-  const handleApplicationEdit = (id: number) => {
+  const handleApplicationEdit = (id: string) => {
+    // Cette fonction sera appelée par ApplicationActions
     console.log(`Édition de la candidature ${id}`);
-    toast({
-      title: "Mode édition",
-      description: "Ouverture du formulaire de modification...",
-    });
   };
 
-  const handleApplicationDelete = (id: number) => {
-    deleteApplication(id);
-    toast({
-      title: "Candidature supprimée",
-      description: "La candidature a été supprimée avec succès.",
-    });
-  };
-
-  const handleApplicationView = (id: number) => {
-    console.log(`Affichage des détails de la candidature ${id}`);
-  };
-
-  const handleStatusChange = (id: number, newStatus: string) => {
-    updateApplication(id, { status: newStatus });
-    toast({
-      title: "Statut mis à jour",
-      description: `Le statut a été changé vers "${newStatus}".`,
-    });
-  };
-
-  const handleImportSuccess = (importedData: any[]) => {
+  const handleApplicationDelete = async (id: string) => {
     try {
-      // Validation et ajout des nouvelles candidatures importées
-      importedData.forEach((appData) => {
-        const { id, ...applicationWithoutId } = appData;
-        
-        // Validation basique des données
-        if (!applicationWithoutId.company || !applicationWithoutId.position) {
-          throw new Error(`Données invalides pour la candidature: ${JSON.stringify(applicationWithoutId)}`);
-        }
-        
-        addApplication({
-          ...applicationWithoutId,
-          statusColor: applicationWithoutId.statusColor || "bg-blue-100 text-blue-800 border-blue-200",
-          tags: Array.isArray(applicationWithoutId.tags) ? applicationWithoutId.tags : [],
-        });
-      });
-      
-      toast({
-        title: "Import réussi",
-        description: `${importedData.length} candidature(s) importée(s) avec succès.`,
-      });
+      await deleteApplication(id);
     } catch (error) {
-      console.error('Erreur lors de l\'import:', error);
-      toast({
-        title: "Erreur d'import",
-        description: "Certaines candidatures n'ont pas pu être importées. Vérifiez le format des données.",
-        variant: "destructive",
-      });
+      console.error('Erreur lors de la suppression:', error);
     }
   };
 
-  // Loading state
-  if (contextLoading) {
+  const handleApplicationView = (id: string) => {
+    console.log(`Affichage des détails de la candidature ${id}`);
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await updateApplication(id, { status: newStatus });
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+    }
+  };
+
+  const handleImportSuccess = (importedData: any[]) => {
+    toast({
+      title: "Import réussi",
+      description: `${importedData.length} candidature(s) importée(s) avec succès.`,
+    });
+    refreshData();
+  };
+
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
             <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Chargement des candidatures...</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">Synchronisation en cours</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900 w-fit mx-auto mb-4">
+              <Building className="h-8 w-8 text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Erreur de chargement</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={refreshData}>
+              Réessayer
+            </Button>
           </div>
         </div>
       </Layout>
@@ -248,7 +170,6 @@ const Applications = () => {
       <div className="space-y-8">
         {/* Enhanced Header Section */}
         <div className="relative">
-          {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 rounded-2xl -z-10" />
           
           <div className="flex items-center justify-between p-8">
@@ -278,7 +199,7 @@ const Applications = () => {
                 </Badge>
                 <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 px-4 py-2">
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  {Math.round((applications.filter(app => app.status === "Entretien" || app.status === "Accepté").length / applications.length) * 100)}% taux de réponse
+                  {applications.length > 0 ? Math.round((applications.filter(app => app.status === "Entretien" || app.status === "Accepté").length / applications.length) * 100) : 0}% taux de réponse
                 </Badge>
               </div>
             </div>
@@ -286,7 +207,7 @@ const Applications = () => {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <ApplicationAnalytics 
-                  applications={applications}
+                  applications={sortedApplications}
                   trigger={
                     <Button 
                       variant="outline" 
@@ -351,26 +272,16 @@ const Applications = () => {
                       size="sm" 
                       variant="outline" 
                       className="bg-white hover:bg-blue-50 border-blue-300"
-                      onClick={() => handleBulkAction("changer-statut")}
+                      onClick={() => {
+                        // Bulk status change logic
+                        toast({
+                          title: "Action groupée",
+                          description: "Fonctionnalité en cours de développement",
+                        });
+                      }}
                     >
                       <Settings className="h-4 w-4 mr-1" />
                       Changer le statut
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="bg-white hover:bg-blue-50 border-blue-300"
-                      onClick={() => handleBulkAction("archiver")}
-                    >
-                      Archiver
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="bg-white hover:bg-red-50 border-red-300 text-red-600"
-                      onClick={() => handleBulkAction("supprimer")}
-                    >
-                      Supprimer
                     </Button>
                   </div>
                 </div>
@@ -466,7 +377,7 @@ const Applications = () => {
         </Tabs>
 
         {/* Empty State */}
-        {sortedApplications.length === 0 && (
+        {sortedApplications.length === 0 && !loading && (
           <Card className="text-center py-16 shadow-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
             <CardContent>
               <div className="max-w-md mx-auto">

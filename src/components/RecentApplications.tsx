@@ -2,13 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, ExternalLink } from "lucide-react";
-import { useApplications } from "@/hooks/useApplications";
+import { useAppContext } from "@/contexts/AppContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 
 const RecentApplications = () => {
-  const { applications, loading, error } = useApplications();
+  const { applications, loading, error } = useAppContext();
 
   if (loading) {
     return (
@@ -45,14 +43,14 @@ const RecentApplications = () => {
   }
 
   const recentApplications = applications
-    ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5) || [];
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'accepté':
         return 'default';
-      case 'rejeté':
+      case 'refusé':
         return 'destructive';
       case 'en cours':
         return 'secondary';
@@ -79,15 +77,22 @@ const RecentApplications = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium">{application.position}</h4>
-                    <Badge variant={getStatusColor(application.status)}>
-                      {application.status}
+                    <Badge variant={getStatusColor(application.status || '')}>
+                      {application.status || 'Non défini'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {application.company} • {application.location}
+                    {application.company} • {application.location || 'Localisation non spécifiée'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(application.applied_date), 'dd MMMM yyyy', { locale: fr })}
+                    {application.applied_date 
+                      ? new Date(application.applied_date).toLocaleDateString('fr-FR', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })
+                      : 'Date non spécifiée'
+                    }
                   </p>
                 </div>
                 <div className="flex gap-2">

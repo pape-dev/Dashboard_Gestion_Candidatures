@@ -8,7 +8,7 @@ import {
 import { useAppContext } from "@/contexts/AppContext";
 
 const StatsCards = () => {
-  const { applications, interviews, tasks, getStatistics } = useAppContext();
+  const { getStatistics } = useAppContext();
   const statistics = getStatistics();
   
   // Calculer les changements par rapport au mois précédent (simulation)

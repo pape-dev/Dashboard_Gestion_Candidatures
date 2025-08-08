@@ -14,13 +14,13 @@ import {
   Mail, MapPin, Clock, CheckCircle, XCircle, AlertCircle, Copy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Interview } from "@/hooks/useApplicationsData";
+import { Interview } from "@/contexts/AppContext";
 
 interface InterviewActionsProps {
   interview: Interview;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onStatusChange?: (id: number, status: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const InterviewActions = ({ 
@@ -32,8 +32,8 @@ const InterviewActions = ({
   const { toast } = useToast();
 
   const handleJoinMeeting = () => {
-    if (interview.meetingLink) {
-      window.open(interview.meetingLink, '_blank');
+    if (interview.meeting_link) {
+      window.open(interview.meeting_link, '_blank');
       toast({
         title: "Réunion ouverte",
         description: `Redirection vers la visioconférence`,
@@ -50,13 +50,13 @@ const InterviewActions = ({
   const handleCall = () => {
     toast({
       title: "Appel initié",
-      description: `Préparation de l'appel avec ${interview.interviewer}`,
+      description: `Préparation de l'appel avec ${interview.interviewer || 'l\'intervieweur'}`,
     });
   };
 
   const handleEmail = () => {
     const subject = `Entretien ${interview.company} - ${interview.position}`;
-    const body = `Bonjour ${interview.interviewer},\n\nConcernant notre entretien prévu le ${new Date(interview.date).toLocaleDateString('fr-FR')} à ${interview.time}.\n\nCordialement`;
+    const body = `Bonjour ${interview.interviewer || 'Madame, Monsieur'},\n\nConcernant notre entretien prévu le ${new Date(interview.interview_date).toLocaleDateString('fr-FR')} à ${interview.interview_time}.\n\nCordialement`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -67,7 +67,7 @@ const InterviewActions = ({
     const newDate = tomorrow.toISOString().split('T')[0];
     
     // Demander confirmation avant de reprogrammer
-    if (window.confirm(`Voulez-vous reprogrammer l'entretien avec ${interview.company} ?\n\nActuel: ${new Date(interview.date).toLocaleDateString('fr-FR')} à ${interview.time}\nProposé: ${tomorrow.toLocaleDateString('fr-FR')} à ${interview.time}`)) {
+    if (window.confirm(`Voulez-vous reprogrammer l'entretien avec ${interview.company} ?\n\nActuel: ${new Date(interview.interview_date).toLocaleDateString('fr-FR')} à ${interview.interview_time}\nProposé: ${tomorrow.toLocaleDateString('fr-FR')} à ${interview.interview_time}`)) {
       // Mettre à jour l'entretien avec la nouvelle date
       onStatusChange?.(interview.id, "à confirmer");
       
@@ -91,20 +91,20 @@ const InterviewActions = ({
 
 📍 ENTREPRISE : ${interview.company}
 💼 POSTE : ${interview.position}
-📅 DATE : ${new Date(interview.date).toLocaleDateString('fr-FR', { 
+📅 DATE : ${new Date(interview.interview_date).toLocaleDateString('fr-FR', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     })}
-⏰ HEURE : ${interview.time}
-⏱️ DURÉE : ${interview.duration}
-🏢 TYPE : ${interview.type}
-📍 LIEU : ${interview.location}
-👤 INTERVIEWEUR : ${interview.interviewer}
-📊 STATUT : ${interview.status.toUpperCase()}
+⏰ HEURE : ${interview.interview_time}
+⏱️ DURÉE : ${interview.duration || 'Non spécifié'}
+🏢 TYPE : ${interview.type || 'Non spécifié'}
+📍 LIEU : ${interview.location || 'Non spécifié'}
+👤 INTERVIEWEUR : ${interview.interviewer || 'Non spécifié'}
+📊 STATUT : ${(interview.status || 'Non défini').toUpperCase()}
 
-${interview.meetingLink ? `🔗 LIEN DE RÉUNION : ${interview.meetingLink}` : ''}
+${interview.meeting_link ? `🔗 LIEN DE RÉUNION : ${interview.meeting_link}` : ''}
 ${interview.notes ? `📝 NOTES : ${interview.notes}` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -143,7 +143,7 @@ Généré le ${new Date().toLocaleString('fr-FR')}`;
     <div className="flex items-center gap-2">
       {/* Actions rapides principales */}
       <div className="flex items-center gap-1">
-        {interview.meetingLink && (
+        {interview.meeting_link && (
           <Button 
             variant="ghost" 
             size="sm" 

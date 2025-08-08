@@ -9,32 +9,16 @@ import {
 } from "lucide-react";
 import ApplicationActions from "@/components/ApplicationActions";
 
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
-}
+import { Application } from "@/contexts/AppContext";
 
 interface ApplicationsTimelineProps {
   applications: Application[];
-  selectedApps: number[];
-  onSelect: (id: number) => void;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onView?: (id: number) => void;
-  onStatusChange?: (id: number, status: string) => void;
+  selectedApps: string[];
+  onSelect: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onView?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const ApplicationsTimeline = ({
@@ -76,12 +60,12 @@ const ApplicationsTimeline = ({
 
   // Trier par date de candidature
   const sortedApplications = [...applications].sort((a, b) => 
-    new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime()
+    new Date(b.applied_date || b.created_at).getTime() - new Date(a.applied_date || a.created_at).getTime()
   );
 
   // Grouper par mois
   const groupedByMonth = sortedApplications.reduce((acc, app) => {
-    const date = new Date(app.appliedDate);
+    const date = new Date(app.applied_date || app.created_at);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const monthName = date.toLocaleDateString('fr-FR', { 
       year: 'numeric', 
@@ -138,9 +122,9 @@ const ApplicationsTimeline = ({
                         <div className="flex items-center gap-4">
                           {/* Logo */}
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden shadow-md">
-                            {app.logo ? (
+                            {app.company_logo_url ? (
                               <img 
-                                src={app.logo} 
+                                src={app.company_logo_url} 
                                 alt={app.company}
                                 className="w-full h-full object-cover rounded-xl"
                                 onError={(e) => {
@@ -156,9 +140,9 @@ const ApplicationsTimeline = ({
                           <div>
                             <div className="flex items-center gap-3 mb-1">
                               <h4 className="text-lg font-bold text-gray-900">{app.company}</h4>
-                              {getPriorityIcon(app.priority)}
-                              <Badge className={`${app.statusColor} font-medium px-3 py-1`}>
-                                {app.status}
+                              {getPriorityIcon(app.priority || 'medium')}
+                              <Badge className={`${getStatusColor(app.status)} font-medium px-3 py-1`}>
+                                {app.status || 'Non défini'}
                               </Badge>
                             </div>
                             <h5 className="text-md font-semibold text-gray-700">{app.position}</h5>
@@ -202,39 +186,31 @@ const ApplicationsTimeline = ({
                       </div>
 
                       {/* Description */}
-                      <p className="text-gray-600 mb-4 line-clamp-2">{app.description}</p>
-
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {app.tags.slice(0, 3).map((tag, tagIndex) => (
-                          <Badge key={tagIndex} variant="outline" className="text-xs px-2 py-1 bg-gray-50">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {app.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs px-2 py-1 bg-gray-50">
-                            +{app.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
+                      {app.description && (
+                        <p className="text-gray-600 mb-4 line-clamp-2">{app.description}</p>
+                      )}
 
                       {/* Informations détaillées */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-400" />
-                          <span>{app.location}</span>
+                          <span>{app.location || 'Non spécifié'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{new Date(app.appliedDate).toLocaleDateString('fr-FR')}</span>
+                          <span>{app.applied_date ? new Date(app.applied_date).toLocaleDateString('fr-FR') : 'Non spécifié'}</span>
                         </div>
                         <div className="flex items-center gap-2 font-semibold text-green-600">
                           <TrendingUp className="h-4 w-4" />
-                          <span>{app.salary}</span>
+                          <span>
+                            {app.salary_min && app.salary_max 
+                              ? `${app.salary_min}-${app.salary_max}${app.salary_currency}` 
+                              : 'Non spécifié'}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-gray-400" />
-                          <span>{app.contactPerson}</span>
+                          <span>{app.contact_person || 'Non spécifié'}</span>
                         </div>
                       </div>
 
@@ -242,7 +218,7 @@ const ApplicationsTimeline = ({
                       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-blue-600">
                           <AlertCircle className="h-4 w-4" />
-                          <span className="font-medium text-sm">{app.nextStep}</span>
+                          <span className="font-medium text-sm">{app.next_step || 'Aucune action définie'}</span>
                         </div>
                         <ArrowRight className="h-4 w-4 text-gray-400" />
                       </div>
@@ -256,6 +232,17 @@ const ApplicationsTimeline = ({
       ))}
     </div>
   );
+};
+
+const getStatusColor = (status: string | null) => {
+  switch (status) {
+    case "En cours": return "bg-blue-100 text-blue-800 border-blue-200";
+    case "Entretien": return "bg-green-100 text-green-800 border-green-200";
+    case "En attente": return "bg-amber-100 text-amber-800 border-amber-200";
+    case "Accepté": return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "Refusé": return "bg-red-100 text-red-800 border-red-200";
+    default: return "bg-gray-100 text-gray-800 border-gray-200";
+  }
 };
 
 export default ApplicationsTimeline;

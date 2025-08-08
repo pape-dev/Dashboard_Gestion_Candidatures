@@ -30,7 +30,9 @@ const DashboardInsights = () => {
     
     // Insight sur les candidatures sans suivi
     const oldApplications = applications.filter(app => {
-      const daysSince = Math.floor((new Date().getTime() - new Date(app.appliedDate).getTime()) / (1000 * 60 * 60 * 24));
+      const daysSince = app.applied_date 
+        ? Math.floor((new Date().getTime() - new Date(app.applied_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
       return daysSince > 7 && app.status === "En cours";
     });
     
@@ -48,7 +50,7 @@ const DashboardInsights = () => {
     
     // Insight sur les entretiens à venir
     const upcomingInterviews = interviews.filter(interview => {
-      const interviewDate = new Date(interview.date);
+      const interviewDate = new Date(interview.interview_date);
       const today = new Date();
       const diffDays = Math.ceil((interviewDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays <= 3 && diffDays >= 0;
@@ -67,13 +69,15 @@ const DashboardInsights = () => {
     }
     
     // Insight par défaut si pas assez de données
-    if (insights.length === 0) {
+    if (insights.length === 0 || applications.length === 0) {
       insights.push({
         type: "tip",
         icon: Lightbulb,
-        title: "Conseil personnalisé",
-        message: "Optimisez vos candidatures en les envoyant le mardi matin pour +25% de réponses",
-        action: "En savoir plus",
+        title: applications.length === 0 ? "Commencez votre recherche" : "Conseil personnalisé",
+        message: applications.length === 0 
+          ? "Ajoutez votre première candidature pour commencer à suivre vos opportunités"
+          : "Optimisez vos candidatures en les envoyant le mardi matin pour +25% de réponses",
+        action: applications.length === 0 ? "Ajouter une candidature" : "En savoir plus",
         gradient: "from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900",
         iconColor: "text-blue-600"
       });

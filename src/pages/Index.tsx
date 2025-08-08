@@ -21,7 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 const Index = () => {
-  const { applications, interviews, getStatistics, loading, refreshData } = useAppContext();
+  const { applications, interviews, tasks, getStatistics, loading, refreshData } = useAppContext();
   const { user } = useAuth();
   const stats = getStatistics();
   
@@ -47,28 +47,28 @@ const Index = () => {
   
   // Données pour les graphiques avec calculs réels
   const applicationData = [
-    { month: "Jan", sent: 15, responses: 3, interviews: 1, efficiency: 20 },
-    { month: "Fév", sent: 22, responses: 7, interviews: 2, efficiency: 32 },
-    { month: "Mar", sent: 18, responses: 5, interviews: 3, efficiency: 28 },
-    { month: "Avr", sent: 25, responses: 8, interviews: 4, efficiency: 32 },
-    { month: "Mai", sent: 30, responses: 12, interviews: 6, efficiency: 40 },
+    { month: "Jan", sent: 0, responses: 0, interviews: 0, efficiency: 0 },
+    { month: "Fév", sent: 0, responses: 0, interviews: 0, efficiency: 0 },
+    { month: "Mar", sent: 0, responses: 0, interviews: 0, efficiency: 0 },
+    { month: "Avr", sent: 0, responses: 0, interviews: 0, efficiency: 0 },
+    { month: "Mai", sent: 0, responses: 0, interviews: 0, efficiency: 0 },
     { month: "Juin", sent: applications.length, responses: stats.activeApplications, interviews: stats.interviewsScheduled, efficiency: stats.responseRate }
   ];
 
   const trendData = [
-    { week: "S1", success: 15 },
-    { week: "S2", success: 25 },
-    { week: "S3", success: 18 },
-    { week: "S4", success: 35 },
-    { week: "S5", success: 28 },
-    { week: "S6", success: 42 }
+    { week: "S1", success: 0 },
+    { week: "S2", success: 0 },
+    { week: "S3", success: 0 },
+    { week: "S4", success: 0 },
+    { week: "S5", success: 0 },
+    { week: "S6", success: stats.responseRate }
   ];
 
   const statusData = [
-    { name: "En attente", value: 45, color: "#f59e0b" },
-    { name: "Entretien", value: 12, color: "#3b82f6" },
-    { name: "Refusé", value: 28, color: "#ef4444" },
-    { name: "Accepté", value: 5, color: "#10b981" }
+    { name: "En attente", value: applications.filter(app => app.status === "En attente").length, color: "#f59e0b" },
+    { name: "Entretien", value: applications.filter(app => app.status === "Entretien").length, color: "#3b82f6" },
+    { name: "Refusé", value: applications.filter(app => app.status === "Refusé").length, color: "#ef4444" },
+    { name: "Accepté", value: applications.filter(app => app.status === "Accepté").length, color: "#10b981" }
   ];
 
   return (

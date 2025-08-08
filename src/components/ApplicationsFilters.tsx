@@ -21,7 +21,7 @@ interface ApplicationsFiltersProps {
   setSortBy: (sortBy: string) => void;
   sortOrder: string;
   setSortOrder: (order: string) => void;
-  selectedApps: number[];
+  selectedApps: string[];
   handleSelectAll: () => void;
   totalApplications: number;
 }
@@ -74,9 +74,9 @@ const ApplicationsFilters = ({
                   <SelectValue placeholder="Trier par" />
                 </SelectTrigger>
                 <SelectContent className="bg-white shadow-xl border-0 rounded-xl">
-                  <SelectItem value="date">Date de candidature</SelectItem>
+                  <SelectItem value="created_at">Date de candidature</SelectItem>
                   <SelectItem value="company">Entreprise</SelectItem>
-                  <SelectItem value="salary">Salaire</SelectItem>
+                  <SelectItem value="salary_min">Salaire</SelectItem>
                 </SelectContent>
               </Select>
 

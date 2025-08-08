@@ -1,64 +1,81 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { handleSupabaseError } from '@/lib/security';
 
 export interface Application {
-  id: number;
+  id: string;
+  user_id: string;
   company: string;
   position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
+  location: string | null;
+  status: string | null;
+  applied_date: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+  description: string | null;
+  priority: string | null;
+  contact_person: string | null;
+  contact_email: string | null;
+  next_step: string | null;
+  job_url: string | null;
+  company_logo_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Interview {
-  id: number;
-  applicationId: number;
+  id: string;
+  user_id: string;
+  application_id: string | null;
   company: string;
   position: string;
-  date: string;
-  time: string;
-  type: string;
-  location: string;
-  interviewer: string;
-  duration: string;
-  status: string;
-  notes?: string;
-  meetingLink?: string;
+  interview_date: string;
+  interview_time: string;
+  type: string | null;
+  location: string | null;
+  interviewer: string | null;
+  duration: string | null;
+  status: string | null;
+  notes: string | null;
+  meeting_link: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Task {
-  id: number;
+  id: string;
+  user_id: string;
+  application_id: string | null;
   title: string;
-  description: string;
-  dueDate: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'todo' | 'in-progress' | 'completed';
-  applicationId?: number;
-  category: 'application' | 'interview' | 'follow-up' | 'research' | 'other';
+  description: string | null;
+  due_date: string | null;
+  priority: string | null;
+  status: string | null;
+  category: string | null;
+  completed: boolean | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Contact {
-  id: number;
+  id: string;
+  user_id: string;
   name: string;
-  email: string;
-  phone?: string;
-  company: string;
-  position: string;
-  notes?: string;
-  linkedIn?: string;
-  lastContact?: string;
-  avatar?: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  position: string | null;
+  notes: string | null;
+  linkedin_url: string | null;
+  last_contact_date: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AppContextType {
@@ -68,27 +85,28 @@ interface AppContextType {
   tasks: Task[];
   contacts: Contact[];
   loading: boolean;
+  error: string | null;
   
   // Actions for Applications
-  addApplication: (application: Omit<Application, 'id'>) => void;
-  updateApplication: (id: number, updates: Partial<Application>) => void;
-  deleteApplication: (id: number) => void;
+  addApplication: (application: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateApplication: (id: string, updates: Partial<Application>) => Promise<void>;
+  deleteApplication: (id: string) => Promise<void>;
   
   // Actions for Interviews
-  addInterview: (interview: Omit<Interview, 'id'>) => void;
-  updateInterview: (id: number, updates: Partial<Interview>) => void;
-  deleteInterview: (id: number) => void;
+  addInterview: (interview: Omit<Interview, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateInterview: (id: string, updates: Partial<Interview>) => Promise<void>;
+  deleteInterview: (id: string) => Promise<void>;
   
   // Actions for Tasks
-  addTask: (task: Omit<Task, 'id'>) => void;
-  updateTask: (id: number, updates: Partial<Task>) => void;
-  deleteTask: (id: number) => void;
-  toggleTaskStatus: (id: number) => void;
+  addTask: (task: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleTaskStatus: (id: string) => Promise<void>;
   
   // Actions for Contacts
-  addContact: (contact: Omit<Contact, 'id'>) => void;
-  updateContact: (id: number, updates: Partial<Contact>) => void;
-  deleteContact: (id: number) => void;
+  addContact: (contact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
+  deleteContact: (id: string) => Promise<void>;
   
   // Statistics & Analytics
   getStatistics: () => {
@@ -117,6 +135,7 @@ export const useAppContext = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // State management
   const [applications, setApplications] = useState<Application[]>([]);
@@ -124,221 +143,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
-  // Initialize with demo data for better UX
-  const initializeDemoData = useCallback(() => {
-    const demoApplications: Application[] = [
-      {
-        id: 1,
-        company: "Google",
-        position: "Senior Frontend Developer",
-        location: "Paris, France",
-        status: "En cours",
-        appliedDate: "2024-01-15",
-        salary: "80-95k €",
-        statusColor: "bg-blue-100 text-blue-800 border-blue-200",
-        description: "Développement d'applications web modernes avec React et TypeScript pour l'équipe Google Workspace",
-        priority: "high",
-        contactPerson: "Marie Dubois",
-        contactEmail: "marie.dubois@google.com",
-        nextStep: "Entretien technique prévu",
-        tags: ["React", "TypeScript", "Remote", "Tech Lead"],
-        logo: "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=64&h=64&fit=crop&crop=center"
-      },
-      {
-        id: 2,
-        company: "Microsoft",
-        position: "UX/UI Designer Senior",
-        location: "Lyon, France",
-        status: "Entretien",
-        appliedDate: "2024-01-12",
-        salary: "65-75k €",
-        statusColor: "bg-green-100 text-green-800 border-green-200",
-        description: "Conception d'interfaces utilisateur innovantes pour Microsoft 365 et Azure Portal",
-        priority: "high",
-        contactPerson: "Jean Martin",
-        contactEmail: "jean.martin@microsoft.com",
-        nextStep: "2ème entretien - 25 Jan",
-        tags: ["Figma", "Design System", "UX Research", "Azure"]
-      },
-      {
-        id: 3,
-        company: "Apple",
-        position: "Product Manager",
-        location: "Remote",
-        status: "En attente",
-        appliedDate: "2024-01-10",
-        salary: "70-85k €",
-        statusColor: "bg-amber-100 text-amber-800 border-amber-200",
-        description: "Gestion produit pour les applications mobiles iOS et coordination avec les équipes internationales",
-        priority: "medium",
-        contactPerson: "Sarah Connor",
-        contactEmail: "sarah.connor@apple.com",
-        nextStep: "Réponse attendue",
-        tags: ["Product Management", "iOS", "Mobile", "International"]
-      },
-      {
-        id: 4,
-        company: "Netflix",
-        position: "DevOps Engineer",
-        location: "Toulouse, France",
-        status: "Accepté",
-        appliedDate: "2024-01-05",
-        salary: "75-90k €",
-        statusColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
-        description: "Infrastructure cloud et déploiement continu pour la plateforme de streaming mondiale",
-        priority: "high",
-        contactPerson: "Carlos Rodriguez",
-        contactEmail: "carlos.rodriguez@netflix.com",
-        nextStep: "Signature du contrat",
-        tags: ["AWS", "Docker", "Kubernetes", "CI/CD", "Streaming"]
-      }
-    ];
-
-    const demoInterviews: Interview[] = [
-      {
-        id: 1,
-        applicationId: 1,
-        company: "Google",
-        position: "Senior Frontend Developer",
-        date: "2025-01-25",
-        time: "14:00",
-        type: "Entretien technique",
-        location: "Visioconférence",
-        interviewer: "Marie Dubois",
-        duration: "1h30",
-        status: "confirmé",
-        notes: "Préparer les questions sur React, TypeScript et architecture frontend",
-        meetingLink: "https://meet.google.com/abc-defg-hij"
-      },
-      {
-        id: 2,
-        applicationId: 2,
-        company: "Microsoft",
-        position: "UX/UI Designer Senior",
-        date: "2025-01-28",
-        time: "10:30",
-        type: "Entretien RH",
-        location: "Lyon - Bureau Microsoft",
-        interviewer: "Jean Martin",
-        duration: "45min",
-        status: "confirmé",
-        notes: "Apporter portfolio physique et présentation des projets récents"
-      },
-      {
-        id: 3,
-        applicationId: 4,
-        company: "Netflix",
-        position: "DevOps Engineer",
-        date: "2025-01-30",
-        time: "16:00",
-        type: "Entretien final",
-        location: "Toulouse - Siège Netflix",
-        interviewer: "Carlos Rodriguez",
-        duration: "2h",
-        status: "à confirmer",
-        notes: "Présentation technique sur l'architecture cloud et scalabilité"
-      }
-    ];
-
-    const demoTasks: Task[] = [
-      {
-        id: 1,
-        title: "Préparer l'entretien Google",
-        description: "Réviser React, TypeScript et algorithmes. Préparer des exemples concrets de projets.",
-        dueDate: "2025-01-24",
-        priority: "high",
-        status: "in-progress",
-        applicationId: 1,
-        category: "interview"
-      },
-      {
-        id: 2,
-        title: "Suivre candidature Apple",
-        description: "Relancer après 2 semaines sans réponse. Préparer un email de suivi professionnel.",
-        dueDate: "2025-01-26",
-        priority: "medium",
-        status: "todo",
-        applicationId: 3,
-        category: "follow-up"
-      },
-      {
-        id: 3,
-        title: "Mettre à jour le CV",
-        description: "Ajouter les dernières compétences, projets et certifications obtenues",
-        dueDate: "2025-01-28",
-        priority: "medium",
-        status: "todo",
-        category: "other"
-      }
-    ];
-
-    const demoContacts: Contact[] = [
-      {
-        id: 1,
-        name: "Marie Dubois",
-        email: "marie.dubois@google.com",
-        phone: "+33 6 12 34 56 78",
-        company: "Google",
-        position: "Senior Technical Recruiter",
-        notes: "Très professionnelle, processus de recrutement rapide et transparent",
-        linkedIn: "https://linkedin.com/in/marie-dubois",
-        lastContact: "2024-01-15",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b1e9?w=64&h=64&fit=crop&crop=center"
-      },
-      {
-        id: 2,
-        name: "Jean Martin",
-        email: "jean.martin@microsoft.com",
-        company: "Microsoft",
-        position: "Design Manager",
-        notes: "Expert en design systems, portfolio requis. Très accessible et bienveillant.",
-        linkedIn: "https://linkedin.com/in/jean-martin",
-        lastContact: "2024-01-12",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=center"
-      }
-    ];
-
-    setApplications(demoApplications);
-    setInterviews(demoInterviews);
-    setTasks(demoTasks);
-    setContacts(demoContacts);
-  }, []);
-
-  // Load data on mount
+  // Load data on mount and user change
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       loadUserData();
     } else {
-      initializeDemoData();
+      // Clear data when not authenticated
+      setApplications([]);
+      setInterviews([]);
+      setTasks([]);
+      setContacts([]);
       setLoading(false);
     }
-  }, [isAuthenticated, initializeDemoData]);
+  }, [isAuthenticated, user]);
 
   const loadUserData = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
+      setError(null);
       
-      // En attendant l'intégration complète avec Supabase, on utilise les données de démo
-      // TODO: Remplacer par les vraies requêtes Supabase
-      initializeDemoData();
+      await Promise.all([
+        fetchApplications(),
+        fetchInterviews(),
+        fetchTasks(),
+        fetchContacts()
+      ]);
       
-      toast({
-        title: "Données chargées",
-        description: "Vos données ont été synchronisées avec succès",
-      });
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
-      toast({
-        title: "Erreur de chargement",
-        description: "Impossible de charger vos données. Utilisation des données locales.",
-        variant: "destructive",
-      });
-      initializeDemoData();
+      setError('Impossible de charger vos données');
+      handleSupabaseError(error, 'Chargement des données');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchApplications = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    setApplications(data || []);
+  };
+
+  const fetchInterviews = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('interviews')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('interview_date', { ascending: true });
+
+    if (error) throw error;
+    setInterviews(data || []);
+  };
+
+  const fetchTasks = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    setTasks(data || []);
+  };
+
+  const fetchContacts = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    setContacts(data || []);
   };
 
   const refreshData = async () => {
@@ -346,171 +237,329 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Application actions
-  const addApplication = useCallback((newApplication: Omit<Application, 'id'>) => {
-    const id = Math.max(...applications.map(a => a.id), 0) + 1;
-    const application: Application = {
-      ...newApplication,
-      id,
-      statusColor: getStatusColor(newApplication.status),
-    };
-    
-    setApplications(prev => [application, ...prev]);
-    
-    toast({
-      title: "Candidature ajoutée",
-      description: `Candidature pour ${newApplication.position} chez ${newApplication.company} ajoutée avec succès`,
-    });
-  }, [applications]);
+  const addApplication = useCallback(async (newApplication: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) throw new Error('User not authenticated');
 
-  const updateApplication = useCallback((id: number, updates: Partial<Application>) => {
-    setApplications(prev => prev.map(app => {
-      if (app.id === id) {
-        const updatedApp = { ...app, ...updates };
-        if (updates.status) {
-          updatedApp.statusColor = getStatusColor(updates.status);
-        }
-        return updatedApp;
-      }
-      return app;
-    }));
-    
-    toast({
-      title: "Candidature mise à jour",
-      description: "Les modifications ont été sauvegardées",
-    });
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .insert({ ...newApplication, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setApplications(prev => [data, ...prev]);
+      
+      toast({
+        title: "Candidature ajoutée",
+        description: `Candidature pour ${newApplication.position} chez ${newApplication.company} ajoutée avec succès`,
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Ajout candidature');
+      throw error;
+    }
+  }, [user]);
+
+  const updateApplication = useCallback(async (id: string, updates: Partial<Application>) => {
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setApplications(prev => prev.map(app => app.id === id ? data : app));
+      
+      toast({
+        title: "Candidature mise à jour",
+        description: "Les modifications ont été sauvegardées",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Mise à jour candidature');
+      throw error;
+    }
   }, []);
 
-  const deleteApplication = useCallback((id: number) => {
-    const application = applications.find(app => app.id === id);
-    setApplications(prev => prev.filter(app => app.id !== id));
-    setInterviews(prev => prev.filter(interview => interview.applicationId !== id));
-    setTasks(prev => prev.filter(task => task.applicationId !== id));
-    
-    if (application) {
-      toast({
-        title: "Candidature supprimée",
-        description: `La candidature pour ${application.position} chez ${application.company} a été supprimée`,
-      });
+  const deleteApplication = useCallback(async (id: string) => {
+    try {
+      const application = applications.find(app => app.id === id);
+      
+      const { error } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setApplications(prev => prev.filter(app => app.id !== id));
+      setInterviews(prev => prev.filter(interview => interview.application_id !== id));
+      setTasks(prev => prev.filter(task => task.application_id !== id));
+      
+      if (application) {
+        toast({
+          title: "Candidature supprimée",
+          description: `La candidature pour ${application.position} chez ${application.company} a été supprimée`,
+        });
+      }
+    } catch (error) {
+      handleSupabaseError(error, 'Suppression candidature');
+      throw error;
     }
   }, [applications]);
 
   // Interview actions
-  const addInterview = useCallback((newInterview: Omit<Interview, 'id'>) => {
-    const id = Math.max(...interviews.map(i => i.id), 0) + 1;
-    const interview: Interview = { ...newInterview, id };
-    
-    setInterviews(prev => [...prev, interview]);
-    
-    toast({
-      title: "Entretien planifié",
-      description: `Entretien avec ${newInterview.company} ajouté au calendrier`,
-    });
-  }, [interviews]);
+  const addInterview = useCallback(async (newInterview: Omit<Interview, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) throw new Error('User not authenticated');
 
-  const updateInterview = useCallback((id: number, updates: Partial<Interview>) => {
-    setInterviews(prev => prev.map(interview => 
-      interview.id === id ? { ...interview, ...updates } : interview
-    ));
-    
-    toast({
-      title: "Entretien mis à jour",
-      description: "Les modifications ont été sauvegardées",
-    });
+    try {
+      const { data, error } = await supabase
+        .from('interviews')
+        .insert({ ...newInterview, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setInterviews(prev => [...prev, data]);
+      
+      toast({
+        title: "Entretien planifié",
+        description: `Entretien avec ${newInterview.company} ajouté au calendrier`,
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Ajout entretien');
+      throw error;
+    }
+  }, [user]);
+
+  const updateInterview = useCallback(async (id: string, updates: Partial<Interview>) => {
+    try {
+      const { data, error } = await supabase
+        .from('interviews')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setInterviews(prev => prev.map(interview => interview.id === id ? data : interview));
+      
+      toast({
+        title: "Entretien mis à jour",
+        description: "Les modifications ont été sauvegardées",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Mise à jour entretien');
+      throw error;
+    }
   }, []);
 
-  const deleteInterview = useCallback((id: number) => {
-    const interview = interviews.find(i => i.id === id);
-    setInterviews(prev => prev.filter(interview => interview.id !== id));
-    
-    if (interview) {
-      toast({
-        title: "Entretien supprimé",
-        description: `L'entretien avec ${interview.company} a été supprimé`,
-      });
+  const deleteInterview = useCallback(async (id: string) => {
+    try {
+      const interview = interviews.find(i => i.id === id);
+      
+      const { error } = await supabase
+        .from('interviews')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setInterviews(prev => prev.filter(interview => interview.id !== id));
+      
+      if (interview) {
+        toast({
+          title: "Entretien supprimé",
+          description: `L'entretien avec ${interview.company} a été supprimé`,
+        });
+      }
+    } catch (error) {
+      handleSupabaseError(error, 'Suppression entretien');
+      throw error;
     }
   }, [interviews]);
 
   // Task actions
-  const addTask = useCallback((newTask: Omit<Task, 'id'>) => {
-    const id = Math.max(...tasks.map(t => t.id), 0) + 1;
-    const task: Task = { ...newTask, id };
-    
-    setTasks(prev => [task, ...prev]);
-    
-    toast({
-      title: "Tâche créée",
-      description: `Nouvelle tâche "${newTask.title}" ajoutée`,
-    });
-  }, [tasks]);
+  const addTask = useCallback(async (newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) throw new Error('User not authenticated');
 
-  const updateTask = useCallback((id: number, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, ...updates } : task
-    ));
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ ...newTask, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setTasks(prev => [data, ...prev]);
+      
+      toast({
+        title: "Tâche créée",
+        description: `Nouvelle tâche "${newTask.title}" ajoutée`,
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Ajout tâche');
+      throw error;
+    }
+  }, [user]);
+
+  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setTasks(prev => prev.map(task => task.id === id ? data : task));
+      
+      toast({
+        title: "Tâche mise à jour",
+        description: "Les modifications ont été sauvegardées",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Mise à jour tâche');
+      throw error;
+    }
   }, []);
 
-  const deleteTask = useCallback((id: number) => {
-    const task = tasks.find(t => t.id === id);
-    setTasks(prev => prev.filter(task => task.id !== id));
-    
-    if (task) {
-      toast({
-        title: "Tâche supprimée",
-        description: `La tâche "${task.title}" a été supprimée`,
-      });
+  const deleteTask = useCallback(async (id: string) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setTasks(prev => prev.filter(task => task.id !== id));
+      
+      if (task) {
+        toast({
+          title: "Tâche supprimée",
+          description: `La tâche "${task.title}" a été supprimée`,
+        });
+      }
+    } catch (error) {
+      handleSupabaseError(error, 'Suppression tâche');
+      throw error;
     }
   }, [tasks]);
 
-  const toggleTaskStatus = useCallback((id: number) => {
-    setTasks(prev => prev.map(task => {
-      if (task.id === id) {
-        const newStatus = task.status === 'completed' ? 'todo' : 'completed';
-        const updatedTask = { ...task, status: newStatus };
-        
-        toast({
-          title: newStatus === 'completed' ? "Tâche terminée" : "Tâche réactivée",
-          description: `"${task.title}" ${newStatus === 'completed' ? 'marquée comme terminée' : 'remise en cours'}`,
-        });
-        
-        return updatedTask;
-      }
-      return task;
-    }));
+  const toggleTaskStatus = useCallback(async (id: string) => {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const newCompleted = !task.completed;
+      const updates: Partial<Task> = {
+        completed: newCompleted,
+        status: newCompleted ? 'completed' : 'todo',
+        completed_at: newCompleted ? new Date().toISOString() : null
+      };
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setTasks(prev => prev.map(t => t.id === id ? data : t));
+      
+      toast({
+        title: newCompleted ? "Tâche terminée" : "Tâche réactivée",
+        description: `"${task.title}" ${newCompleted ? 'marquée comme terminée' : 'remise en cours'}`,
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Changement statut tâche');
+      throw error;
+    }
   }, [tasks]);
 
   // Contact actions
-  const addContact = useCallback((newContact: Omit<Contact, 'id'>) => {
-    const id = Math.max(...contacts.map(c => c.id), 0) + 1;
-    const contact: Contact = { ...newContact, id };
-    
-    setContacts(prev => [contact, ...prev]);
-    
-    toast({
-      title: "Contact ajouté",
-      description: `${newContact.name} ajouté à vos contacts`,
-    });
-  }, [contacts]);
+  const addContact = useCallback(async (newContact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) throw new Error('User not authenticated');
 
-  const updateContact = useCallback((id: number, updates: Partial<Contact>) => {
-    setContacts(prev => prev.map(contact => 
-      contact.id === id ? { ...contact, ...updates } : contact
-    ));
-    
-    toast({
-      title: "Contact mis à jour",
-      description: "Les modifications ont été sauvegardées",
-    });
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert({ ...newContact, user_id: user.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setContacts(prev => [data, ...prev]);
+      
+      toast({
+        title: "Contact ajouté",
+        description: `${newContact.name} ajouté à vos contacts`,
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Ajout contact');
+      throw error;
+    }
+  }, [user]);
+
+  const updateContact = useCallback(async (id: string, updates: Partial<Contact>) => {
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setContacts(prev => prev.map(contact => contact.id === id ? data : contact));
+      
+      toast({
+        title: "Contact mis à jour",
+        description: "Les modifications ont été sauvegardées",
+      });
+    } catch (error) {
+      handleSupabaseError(error, 'Mise à jour contact');
+      throw error;
+    }
   }, []);
 
-  const deleteContact = useCallback((id: number) => {
-    const contact = contacts.find(c => c.id === id);
-    setContacts(prev => prev.filter(contact => contact.id !== id));
-    
-    if (contact) {
-      toast({
-        title: "Contact supprimé",
-        description: `${contact.name} a été supprimé de vos contacts`,
-      });
+  const deleteContact = useCallback(async (id: string) => {
+    try {
+      const contact = contacts.find(c => c.id === id);
+      
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setContacts(prev => prev.filter(contact => contact.id !== id));
+      
+      if (contact) {
+        toast({
+          title: "Contact supprimé",
+          description: `${contact.name} a été supprimé de vos contacts`,
+        });
+      }
+    } catch (error) {
+      handleSupabaseError(error, 'Suppression contact');
+      throw error;
     }
   }, [contacts]);
 
@@ -518,16 +567,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getStatistics = useCallback(() => {
     const totalApplications = applications.length;
     const activeApplications = applications.filter(app => 
-      ['En cours', 'Entretien', 'En attente'].includes(app.status)
+      ['En cours', 'Entretien', 'En attente'].includes(app.status || '')
     ).length;
     const interviewsScheduled = interviews.filter(interview => 
-      ['confirmé', 'à confirmer'].includes(interview.status)
+      ['confirmé', 'à confirmer'].includes(interview.status || '')
     ).length;
     const responseRate = totalApplications > 0 
-      ? Math.round((applications.filter(app => app.status !== 'En attente').length / totalApplications) * 100)
+      ? Math.round((applications.filter(app => app.status !== 'En attente' && app.status !== null).length / totalApplications) * 100)
       : 0;
-    const pendingTasks = tasks.filter(task => task.status !== 'completed').length;
-    const completedTasks = tasks.filter(task => task.status === 'completed').length;
+    const pendingTasks = tasks.filter(task => !task.completed).length;
+    const completedTasks = tasks.filter(task => task.completed).length;
 
     return {
       totalApplications,
@@ -539,18 +588,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [applications, interviews, tasks]);
 
-  // Helper function for status colors
-  const getStatusColor = (status: string): string => {
-    const statusColors: Record<string, string> = {
-      'En cours': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Entretien': 'bg-green-100 text-green-800 border-green-200',
-      'En attente': 'bg-amber-100 text-amber-800 border-amber-200',
-      'Accepté': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      'Refusé': 'bg-red-100 text-red-800 border-red-200',
-    };
-    return statusColors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
-
   const value: AppContextType = {
     // Data
     applications,
@@ -558,6 +595,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     tasks,
     contacts,
     loading,
+    error,
     
     // Actions
     addApplication,

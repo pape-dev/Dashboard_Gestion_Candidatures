@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,55 +7,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Calendar as CalendarIcon, Clock, MapPin, Users, Plus, ChevronLeft, ChevronRight,
   Video, Phone, Mail, Filter, Search, Download, Bell, Settings, Building,
-  TrendingUp, AlertCircle, CheckCircle, BarChart3
+  TrendingUp, AlertCircle, CheckCircle, BarChart3, Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import InterviewActions from "@/components/InterviewActions";
 import InterviewForm from "@/components/InterviewForm";
-import InterviewEditForm from "@/components/InterviewEditForm";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [editFormOpen, setEditFormOpen] = useState(false);
-  const [editingInterview, setEditingInterview] = useState<any>(null);
-  const { interviews, applications, updateInterview, deleteInterview } = useAppContext();
+  const { 
+    interviews, 
+    applications, 
+    loading,
+    updateInterview, 
+    deleteInterview,
+    refreshData 
+  } = useAppContext();
   const { toast } = useToast();
   
-  // Refresh data on mount
   useEffect(() => {
-    // Auto-refresh interviews data
+    refreshData();
   }, []);
   
   const filteredInterviews = interviews.filter(interview => {
     const matchesSearch = interview.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          interview.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         interview.interviewer.toLowerCase().includes(searchTerm.toLowerCase());
+                         (interview.interviewer && interview.interviewer.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || interview.status === statusFilter;
-    const matchesType = typeFilter === "all" || interview.type.toLowerCase().includes(typeFilter.toLowerCase());
+    const matchesType = typeFilter === "all" || (interview.type && interview.type.toLowerCase().includes(typeFilter.toLowerCase()));
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const upcomingInterviews = filteredInterviews.filter(interview => 
-    new Date(interview.date) >= new Date()
-  ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    new Date(interview.interview_date) >= new Date()
+  ).sort((a, b) => new Date(a.interview_date).getTime() - new Date(b.interview_date).getTime());
 
   const todayInterviews = filteredInterviews.filter(interview => {
     const today = new Date();
-    const interviewDate = new Date(interview.date);
+    const interviewDate = new Date(interview.interview_date);
     return interviewDate.toDateString() === today.toDateString();
   });
 
   const thisWeekInterviews = filteredInterviews.filter(interview => {
     const today = new Date();
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const interviewDate = new Date(interview.date);
+    const interviewDate = new Date(interview.interview_date);
     return interviewDate >= today && interviewDate <= weekFromNow;
   });
 
@@ -91,7 +92,7 @@ const Calendar = () => {
 
   const getInterviewsForDay = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return interviews.filter(interview => interview.date === dateStr);
+    return interviews.filter(interview => interview.interview_date === dateStr);
   };
 
   const hasInterview = (day: number) => {
@@ -104,32 +105,27 @@ const Calendar = () => {
     setCurrentDate(newDate);
   };
 
-  const handleInterviewEdit = (id: number) => {
-    const interviewToEdit = interviews.find(i => i.id === id);
-    if (interviewToEdit) {
-      setEditingInterview(interviewToEdit);
-      setEditFormOpen(true);
+  const handleInterviewEdit = (id: string) => {
+    console.log('Édition de l\'entretien:', id);
+  };
+
+  const handleInterviewDelete = async (id: string) => {
+    try {
+      await deleteInterview(id);
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
     }
   };
 
-  const handleInterviewDelete = (id: number) => {
-    deleteInterview(id);
-    toast({
-      title: "Suppression d'entretien",
-      description: `Entretien ${id} supprimé avec succès`,
-    });
-  };
-
-  const handleStatusChange = (id: number, status: string) => {
-    updateInterview(id, { status });
-    toast({
-      title: "Statut modifié",
-      description: `Statut de l'entretien ${id} changé en "${status}"`,
-    });
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await updateInterview(id, { status });
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+    }
   };
 
   const handleExportCalendar = () => {
-    // Créer un fichier ICS avec tous les entretiens
     const icsContent = generateICSFile(interviews);
     const blob = new Blob([icsContent], { type: 'text/calendar' });
     const url = URL.createObjectURL(blob);
@@ -147,24 +143,9 @@ const Calendar = () => {
     });
   };
 
-  const handleSyncCalendar = async () => {
-    toast({
-      title: "Synchronisation démarrée",
-      description: "Synchronisation avec votre calendrier externe...",
-    });
-
-    // Simuler la synchronisation avec Google Calendar, Outlook, etc.
-    setTimeout(() => {
-      toast({
-        title: "Synchronisation réussie",
-        description: "Votre calendrier a été synchronisé avec succès",
-      });
-    }, 2000);
-  };
-
   const generateICSFile = (interviews: any[]) => {
     const icsEvents = interviews.map(interview => {
-      const startDate = new Date(`${interview.date}T${interview.time}`);
+      const startDate = new Date(`${interview.interview_date}T${interview.interview_time}`);
       const endDate = new Date(startDate.getTime() + (interview.duration === '1h' ? 60 : 120) * 60000);
       
       return `BEGIN:VEVENT
@@ -172,8 +153,8 @@ UID:${interview.id}@entretiens-app.com
 DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 SUMMARY:${interview.type} - ${interview.company}
-DESCRIPTION:Poste: ${interview.position}\\nIntervieweur: ${interview.interviewer}\\nNotes: ${interview.notes || 'Aucune note'}
-LOCATION:${interview.location}
+DESCRIPTION:Poste: ${interview.position}\\nIntervieweur: ${interview.interviewer || 'Non spécifié'}\\nNotes: ${interview.notes || 'Aucune note'}
+LOCATION:${interview.location || 'Non spécifié'}
 STATUS:${interview.status === 'confirmé' ? 'CONFIRMED' : 'TENTATIVE'}
 END:VEVENT`;
     }).join('\n');
@@ -191,6 +172,19 @@ END:VCALENDAR`;
   ];
 
   const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Chargement du calendrier...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -220,15 +214,6 @@ END:VCALENDAR`;
           <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
-              className="gap-2 hover:bg-blue-50 border-blue-300 text-blue-700"
-              onClick={handleSyncCalendar}
-            >
-              <Settings className="h-4 w-4" />
-              Synchroniser
-            </Button>
-            
-            <Button 
-              variant="outline" 
               className="gap-2 hover:bg-gray-50 border-gray-300"
               onClick={handleExportCalendar}
             >
@@ -236,7 +221,12 @@ END:VCALENDAR`;
               Exporter
             </Button>
             
-            <InterviewForm />
+            <InterviewForm>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2">
+                <Plus className="h-4 w-4" />
+                Nouvel entretien
+              </Button>
+            </InterviewForm>
           </div>
         </div>
 
@@ -433,7 +423,7 @@ END:VCALENDAR`;
                                   {dayInterviews.slice(0, 2).map((interview, idx) => (
                                     <div key={idx} className="w-full">
                                       <div className="text-xs bg-blue-500 text-white px-1 py-0.5 rounded truncate">
-                                        {interview.time} {interview.company}
+                                        {interview.interview_time} {interview.company}
                                       </div>
                                     </div>
                                   ))}
@@ -464,7 +454,7 @@ END:VCALENDAR`;
                 <CardContent>
                   <div className="space-y-4 max-h-96 overflow-y-auto">
                      {upcomingInterviews.slice(0, 5).map((interview) => {
-                       const application = applications.find(app => app.id === interview.applicationId);
+                       const application = applications.find(app => app.id === interview.application_id);
                        
                        const getStatusStyle = (status: string) => {
                          switch (status) {
@@ -483,9 +473,9 @@ END:VCALENDAR`;
                            <div className="flex items-start justify-between mb-4">
                              <div className="flex items-center gap-3">
                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-lg">
-                                 {application?.logo ? (
+                                 {application?.company_logo_url ? (
                                    <img 
-                                     src={application.logo} 
+                                     src={application.company_logo_url} 
                                      alt={interview.company}
                                      className="w-full h-full object-cover rounded-xl"
                                    />
@@ -496,7 +486,7 @@ END:VCALENDAR`;
                                <div>
                                  <h4 className="font-bold text-gray-900 dark:text-slate-100 text-lg">{interview.company}</h4>
                                  <p className="text-sm text-gray-600 dark:text-slate-300 font-medium">{interview.position}</p>
-                                 <Badge className={`mt-1 ${getStatusStyle(interview.status)} text-xs font-semibold`}>
+                                 <Badge className={`mt-1 ${getStatusStyle(interview.status || '')} text-xs font-semibold`}>
                                    {interview.status}
                                  </Badge>
                                </div>
@@ -510,19 +500,19 @@ END:VCALENDAR`;
                            <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                              <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <CalendarIcon className="h-4 w-4 text-blue-500" />
-                               <span className="font-medium text-gray-700 dark:text-slate-200">{new Date(interview.date).toLocaleDateString('fr-FR')}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200">{new Date(interview.interview_date).toLocaleDateString('fr-FR')}</span>
                              </div>
                              <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <Clock className="h-4 w-4 text-green-500" />
-                               <span className="font-medium text-gray-700 dark:text-slate-200">{interview.time}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200">{interview.interview_time}</span>
                              </div>
                              <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <MapPin className="h-4 w-4 text-purple-500" />
-                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.location}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.location || 'Non spécifié'}</span>
                              </div>
                              <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-700 rounded-lg border border-gray-100 dark:border-slate-600">
                                <Users className="h-4 w-4 text-orange-500" />
-                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.interviewer}</span>
+                               <span className="font-medium text-gray-700 dark:text-slate-200 truncate">{interview.interviewer || 'Non spécifié'}</span>
                              </div>
                            </div>
 
@@ -540,6 +530,19 @@ END:VCALENDAR`;
                          </div>
                        );
                      })}
+
+                     {upcomingInterviews.length === 0 && (
+                       <div className="text-center py-8 text-gray-500">
+                         <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                         <p>Aucun entretien à venir</p>
+                         <InterviewForm>
+                           <Button variant="outline" className="mt-4">
+                             <Plus className="h-4 w-4 mr-2" />
+                             Planifier un entretien
+                           </Button>
+                         </InterviewForm>
+                       </div>
+                     )}
                   </div>
                 </CardContent>
               </Card>
@@ -554,7 +557,7 @@ END:VCALENDAR`;
               <CardContent>
                 <div className="space-y-4">
                    {filteredInterviews.map((interview) => {
-                     const application = applications.find(app => app.id === interview.applicationId);
+                     const application = applications.find(app => app.id === interview.application_id);
                      const getStatusStyle = (status: string) => {
                        switch (status) {
                          case "confirmé": return "bg-green-100 text-green-800 border-green-200";
@@ -565,8 +568,8 @@ END:VCALENDAR`;
                        }
                      };
 
-                     const isUpcoming = new Date(interview.date) >= new Date();
-                     const isToday = new Date(interview.date).toDateString() === new Date().toDateString();
+                     const isUpcoming = new Date(interview.interview_date) >= new Date();
+                     const isToday = new Date(interview.interview_date).toDateString() === new Date().toDateString();
 
                      return (
                        <div key={interview.id} className={`group relative bg-gradient-to-br from-white via-gray-50 to-gray-100 border rounded-xl p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${isToday ? 'ring-2 ring-blue-500 border-blue-300' : 'border-gray-200 hover:border-blue-300'}`}>
@@ -581,9 +584,9 @@ END:VCALENDAR`;
                          <div className="flex items-start justify-between mb-6">
                            <div className="flex items-center gap-4">
                              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden shadow-lg ring-4 ring-white">
-                               {application?.logo ? (
+                               {application?.company_logo_url ? (
                                  <img 
-                                   src={application.logo} 
+                                   src={application.company_logo_url} 
                                    alt={interview.company}
                                    className="w-full h-full object-cover rounded-xl"
                                  />
@@ -595,7 +598,7 @@ END:VCALENDAR`;
                                <h3 className="text-xl font-bold text-gray-900 mb-1">{interview.company}</h3>
                                <p className="text-lg text-gray-700 font-medium mb-2">{interview.position}</p>
                                <div className="flex items-center gap-2">
-                                 <Badge className={`${getStatusStyle(interview.status)} text-xs font-semibold px-3 py-1`}>
+                                 <Badge className={`${getStatusStyle(interview.status || '')} text-xs font-semibold px-3 py-1`}>
                                    {interview.status}
                                  </Badge>
                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium text-xs px-3 py-1">
@@ -620,7 +623,7 @@ END:VCALENDAR`;
                              </div>
                              <div>
                                <p className="text-xs text-gray-500 font-medium">Date</p>
-                               <p className="text-sm font-bold text-gray-900">{new Date(interview.date).toLocaleDateString('fr-FR')}</p>
+                               <p className="text-sm font-bold text-gray-900">{new Date(interview.interview_date).toLocaleDateString('fr-FR')}</p>
                              </div>
                            </div>
                            
@@ -630,7 +633,7 @@ END:VCALENDAR`;
                              </div>
                              <div>
                                <p className="text-xs text-gray-500 font-medium">Heure</p>
-                               <p className="text-sm font-bold text-gray-900">{interview.time}</p>
+                               <p className="text-sm font-bold text-gray-900">{interview.interview_time}</p>
                              </div>
                            </div>
                            
@@ -640,7 +643,7 @@ END:VCALENDAR`;
                              </div>
                              <div>
                                <p className="text-xs text-gray-500 font-medium">Lieu</p>
-                               <p className="text-sm font-bold text-gray-900 truncate">{interview.location}</p>
+                               <p className="text-sm font-bold text-gray-900 truncate">{interview.location || 'Non spécifié'}</p>
                              </div>
                            </div>
                            
@@ -650,7 +653,7 @@ END:VCALENDAR`;
                              </div>
                              <div>
                                <p className="text-xs text-gray-500 font-medium">Intervieweur</p>
-                               <p className="text-sm font-bold text-gray-900 truncate">{interview.interviewer}</p>
+                               <p className="text-sm font-bold text-gray-900 truncate">{interview.interviewer || 'Non spécifié'}</p>
                              </div>
                            </div>
                          </div>
@@ -658,7 +661,7 @@ END:VCALENDAR`;
                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                            <div className="flex items-center gap-4 text-sm text-gray-600">
                              <span>Durée: <strong>{interview.duration}</strong></span>
-                             {interview.meetingLink && (
+                             {interview.meeting_link && (
                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                                  <Video className="h-3 w-3 mr-1" />
                                  Lien dispo
@@ -677,6 +680,19 @@ END:VCALENDAR`;
                        </div>
                      );
                    })}
+
+                   {filteredInterviews.length === 0 && (
+                     <div className="text-center py-8 text-gray-500">
+                       <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                       <p>Aucun entretien planifié</p>
+                       <InterviewForm>
+                         <Button variant="outline" className="mt-4">
+                           <Plus className="h-4 w-4 mr-2" />
+                           Planifier un entretien
+                         </Button>
+                       </InterviewForm>
+                     </div>
+                   )}
                 </div>
               </CardContent>
             </Card>
@@ -715,10 +731,10 @@ END:VCALENDAR`;
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { type: "Entretien technique", count: interviews.filter(i => i.type.includes("technique")).length, color: "bg-purple-500" },
-                      { type: "Entretien RH", count: interviews.filter(i => i.type.includes("RH")).length, color: "bg-blue-500" },
-                      { type: "Entretien final", count: interviews.filter(i => i.type.includes("final")).length, color: "bg-green-500" },
-                      { type: "Entretien équipe", count: interviews.filter(i => i.type.includes("équipe")).length, color: "bg-orange-500" }
+                      { type: "Entretien technique", count: interviews.filter(i => i.type?.includes("technique")).length, color: "bg-purple-500" },
+                      { type: "Entretien RH", count: interviews.filter(i => i.type?.includes("RH")).length, color: "bg-blue-500" },
+                      { type: "Entretien final", count: interviews.filter(i => i.type?.includes("final")).length, color: "bg-green-500" },
+                      { type: "Entretien équipe", count: interviews.filter(i => i.type?.includes("équipe")).length, color: "bg-orange-500" }
                     ].map((item) => (
                       <div key={item.type} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -734,13 +750,6 @@ END:VCALENDAR`;
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Formulaire de modification */}
-        <InterviewEditForm
-          interview={editingInterview}
-          open={editFormOpen}
-          onOpenChange={setEditFormOpen}
-        />
       </div>
     </Layout>
   );

@@ -10,23 +10,7 @@ import {
   Users, Award, Clock, Sparkles, Building
 } from "lucide-react";
 
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
-}
+import { Application } from "@/contexts/AppContext";
 
 interface ApplicationAnalyticsProps {
   applications: Application[];
@@ -36,7 +20,8 @@ interface ApplicationAnalyticsProps {
 const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsProps) => {
   // Analytics calculations
   const statusData = applications.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1;
+    const status = app.status || 'Non défini';
+    acc[status] = (acc[status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -50,7 +35,7 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
   }));
 
   const locationData = applications.reduce((acc, app) => {
-    const city = app.location.split(',')[0].trim();
+    const city = app.location ? app.location.split(',')[0].trim() : 'Non spécifié';
     acc[city] = (acc[city] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -61,7 +46,8 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
     .map(([location, count]) => ({ location, count }));
 
   const monthlyData = applications.reduce((acc, app) => {
-    const month = new Date(app.appliedDate).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+    const date = app.applied_date ? new Date(app.applied_date) : new Date(app.created_at);
+    const month = date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
     acc[month] = (acc[month] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -71,20 +57,25 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
     .map(([month, count]) => ({ month, candidatures: count }));
 
   const priorityData = applications.reduce((acc, app) => {
-    acc[app.priority] = (acc[app.priority] || 0) + 1;
+    const priority = app.priority || 'medium';
+    acc[priority] = (acc[priority] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const salaryRanges = applications.map(app => {
-    const range = app.salary.match(/(\d+)-(\d+)k/);
-    if (range) {
-      return { min: parseInt(range[1]), max: parseInt(range[2]), company: app.company };
-    }
-    return null;
-  }).filter(Boolean);
+  const salaryRanges = applications
+    .filter(app => app.salary_min && app.salary_max)
+    .map(app => ({
+      min: app.salary_min!,
+      max: app.salary_max!,
+      company: app.company
+    }));
 
-  const avgSalaryMin = salaryRanges.reduce((sum, range) => sum + (range?.min || 0), 0) / salaryRanges.length;
-  const avgSalaryMax = salaryRanges.reduce((sum, range) => sum + (range?.max || 0), 0) / salaryRanges.length;
+  const avgSalaryMin = salaryRanges.length > 0 
+    ? salaryRanges.reduce((sum, range) => sum + range.min, 0) / salaryRanges.length 
+    : 0;
+  const avgSalaryMax = salaryRanges.length > 0 
+    ? salaryRanges.reduce((sum, range) => sum + range.max, 0) / salaryRanges.length 
+    : 0;
 
   const responseRate = applications.filter(app => 
     app.status === "Entretien" || app.status === "Accepté"
@@ -92,16 +83,16 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
 
   const successRate = applications.filter(app => app.status === "Accepté").length / applications.length * 100;
 
-  const topTags = applications.flatMap(app => app.tags).reduce((acc, tag) => {
-    acc[tag] = (acc[tag] || 0) + 1;
+  // Remplacer les tags par les types d'entretiens ou autres métriques
+  const companyData = applications.reduce((acc, app) => {
+    acc[app.company] = (acc[app.company] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const topTagsData = Object.entries(topTags)
+  const topCompaniesData = Object.entries(companyData)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 8)
-    .map(([tag, count]) => ({ tag, count }));
-
+    .map(([company, count]) => ({ company, count }));
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -152,7 +143,9 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-2xl font-bold text-amber-800">{avgSalaryMin.toFixed(0)}-{avgSalaryMax.toFixed(0)}k€</div>
+                    <div className="text-2xl font-bold text-amber-800">
+                      {avgSalaryMin > 0 ? `${avgSalaryMin.toFixed(0)}-${avgSalaryMax.toFixed(0)}k€` : 'N/A'}
+                    </div>
                     <div className="text-sm text-amber-600">Salaire moyen</div>
                   </div>
                   <DollarSign className="h-8 w-8 text-amber-600" />
@@ -273,16 +266,16 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-amber-600" />
-                  Compétences populaires
+                  <Building className="h-5 w-5 text-amber-600" />
+                  Entreprises ciblées
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={topTagsData} layout="horizontal">
+                  <BarChart data={topCompaniesData} layout="horizontal">
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
-                    <YAxis dataKey="tag" type="category" width={80} />
+                    <YAxis dataKey="company" type="category" width={80} />
                     <Tooltip />
                     <Bar dataKey="count" fill="#f59e0b" />
                   </BarChart>
@@ -328,7 +321,7 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
                   </div>
                 )}
 
-                {Object.keys(locationData).length > 5 && (
+                {Object.keys(locationData).length > 3 && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="h-5 w-5 text-blue-600" />
@@ -336,6 +329,18 @@ const ApplicationAnalytics = ({ applications, trigger }: ApplicationAnalyticsPro
                     </div>
                     <div className="text-sm text-blue-700">
                       Vous candidatez dans {Object.keys(locationData).length} villes différentes. Bonne stratégie!
+                    </div>
+                  </div>
+                )}
+
+                {applications.length === 0 && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-5 w-5 text-blue-600" />
+                      <div className="font-semibold text-blue-800">Commencez votre recherche</div>
+                    </div>
+                    <div className="text-sm text-blue-700">
+                      Ajoutez votre première candidature pour commencer à analyser vos performances.
                     </div>
                   </div>
                 )}

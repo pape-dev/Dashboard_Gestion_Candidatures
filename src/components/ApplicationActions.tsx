@@ -36,30 +36,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
-}
+import { Application } from "@/contexts/AppContext";
 
 interface ApplicationActionsProps {
   application: Application;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onView?: (id: number) => void;
-  onStatusChange?: (id: number, status: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onView?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const ApplicationActions = ({ 
@@ -109,10 +93,10 @@ const ApplicationActions = ({
   };
 
   const handleEmail = () => {
-    if (application.contactEmail) {
+    if (application.contact_email) {
       const subject = encodeURIComponent(`Candidature - ${application.position}`);
-      const body = encodeURIComponent(`Bonjour ${application.contactPerson || 'Madame, Monsieur'},\n\nJe me permets de vous recontacter concernant ma candidature pour le poste de ${application.position} chez ${application.company}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement`);
-      window.open(`mailto:${application.contactEmail}?subject=${subject}&body=${body}`);
+      const body = encodeURIComponent(`Bonjour ${application.contact_person || 'Madame, Monsieur'},\n\nJe me permets de vous recontacter concernant ma candidature pour le poste de ${application.position} chez ${application.company}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement`);
+      window.open(`mailto:${application.contact_email}?subject=${subject}&body=${body}`);
     } else {
       toast({
         title: "Email non disponible",
@@ -123,10 +107,10 @@ const ApplicationActions = ({
   };
 
   const handleCall = () => {
-    if (application.contactPerson) {
+    if (application.contact_person) {
       toast({
         title: "Préparation de l'appel",
-        description: `Prêt à appeler ${application.contactPerson} chez ${application.company}`,
+        description: `Prêt à appeler ${application.contact_person} chez ${application.company}`,
       });
     } else {
       toast({
@@ -461,11 +445,15 @@ const ApplicationActions = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-gray-700">Localisation</label>
-                    <p className="text-gray-900">{application.location}</p>
+                    <p className="text-gray-900">{application.location || 'Non spécifié'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700">Salaire</label>
-                    <p className="text-green-600 font-semibold">{application.salary}</p>
+                    <p className="text-green-600 font-semibold">
+                      {application.salary_min && application.salary_max 
+                        ? `${application.salary_min}-${application.salary_max}${application.salary_currency}` 
+                        : 'Non spécifié'}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700">Priorité</label>
@@ -476,7 +464,7 @@ const ApplicationActions = ({
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-gray-700">Prochaine étape</label>
-                    <p className="text-blue-600 font-medium">{application.nextStep}</p>
+                    <p className="text-blue-600 font-medium">{application.next_step || 'Aucune action définie'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -487,7 +475,7 @@ const ApplicationActions = ({
                 <CardTitle className="text-lg">Description du poste</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 leading-relaxed">{application.description}</p>
+                <p className="text-gray-700 leading-relaxed">{application.description || 'Aucune description disponible'}</p>
               </CardContent>
             </Card>
 
@@ -498,29 +486,25 @@ const ApplicationActions = ({
               <CardContent className="space-y-3">
                 <div>
                   <label className="text-sm font-semibold text-gray-700">Personne de contact</label>
-                  <p className="text-gray-900">{application.contactPerson}</p>
+                  <p className="text-gray-900">{application.contact_person || 'Non spécifié'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-gray-700">Email</label>
-                  <p className="text-blue-600">{application.contactEmail}</p>
+                  <p className="text-blue-600">{application.contact_email || 'Non spécifié'}</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Compétences</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {application.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="px-3 py-1">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {application.notes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Notes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed">{application.notes}</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">

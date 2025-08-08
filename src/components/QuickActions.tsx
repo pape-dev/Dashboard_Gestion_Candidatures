@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 const QuickActions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getStatistics } = useAppContext();
+  const { getStatistics, addApplication, addInterview, addTask, addContact } = useAppContext();
   const stats = getStatistics();
   
   const actions = [
@@ -20,7 +20,14 @@ const QuickActions = () => {
       icon: Plus,
       gradient: "from-blue-500 to-blue-600",
       hoverGradient: "hover:from-blue-600 hover:to-blue-700",
-      action: () => navigate("/applications"),
+      action: () => {
+        // Ouvrir directement le formulaire de candidature
+        toast({
+          title: "Nouvelle candidature",
+          description: "Cliquez sur le bouton 'Nouvelle candidature' pour commencer",
+        });
+        navigate("/applications");
+      },
       badge: "Rapide",
       badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
     },
@@ -30,7 +37,13 @@ const QuickActions = () => {
       icon: Search,
       gradient: "from-emerald-500 to-emerald-600",
       hoverGradient: "hover:from-emerald-600 hover:to-emerald-700",
-      action: () => navigate("/job-search"),
+      action: () => {
+        toast({
+          title: "Recherche d'emploi",
+          description: "Redirection vers la page de recherche d'emploi",
+        });
+        navigate("/job-search");
+      },
       badge: "IA",
       badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
     },
@@ -40,7 +53,13 @@ const QuickActions = () => {
       icon: Calendar,
       gradient: "from-purple-500 to-purple-600",
       hoverGradient: "hover:from-purple-600 hover:to-purple-700",
-      action: () => navigate("/calendar"),
+      action: () => {
+        toast({
+          title: "Planifier entretien",
+          description: "Redirection vers le calendrier",
+        });
+        navigate("/calendar");
+      },
       badge: "Urgent",
       badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
     },
@@ -50,7 +69,13 @@ const QuickActions = () => {
       icon: FileText,
       gradient: "from-amber-500 to-amber-600",
       hoverGradient: "hover:from-amber-600 hover:to-amber-700",
-      action: () => navigate("/profile"),
+      action: () => {
+        toast({
+          title: "Mise à jour CV",
+          description: "Redirection vers votre profil",
+        });
+        navigate("/profile");
+      },
       badge: "Pro",
       badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
     },
@@ -60,7 +85,13 @@ const QuickActions = () => {
       icon: Users,
       gradient: "from-pink-500 to-pink-600",
       hoverGradient: "hover:from-pink-600 hover:to-pink-700",
-      action: () => navigate("/contacts"),
+      action: () => {
+        toast({
+          title: "Nouveau contact",
+          description: "Redirection vers vos contacts",
+        });
+        navigate("/contacts");
+      },
       badge: "Réseau",
       badgeColor: "bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300"
     },
@@ -70,7 +101,13 @@ const QuickActions = () => {
       icon: Target,
       gradient: "from-indigo-500 to-indigo-600",
       hoverGradient: "hover:from-indigo-600 hover:to-indigo-700",
-      action: () => navigate("/tasks"),
+      action: () => {
+        toast({
+          title: "Nouvelle tâche",
+          description: "Redirection vers vos tâches",
+        });
+        navigate("/tasks");
+      },
       badge: "Suivi",
       badgeColor: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
     }

@@ -16,18 +16,18 @@ const WeeklyActivity = () => {
       date.setDate(today.getDate() - i);
       
       const dayApplications = applications.filter(app => {
-        const appDate = new Date(app.appliedDate);
+        const appDate = new Date(app.applied_date || app.created_at);
         return appDate.toDateString() === date.toDateString();
       }).length;
       
       const dayInterviews = interviews.filter(interview => {
-        const interviewDate = new Date(interview.date);
+        const interviewDate = new Date(interview.interview_date);
         return interviewDate.toDateString() === date.toDateString();
       }).length;
       
       const dayTasks = tasks.filter(task => {
-        const taskDate = new Date(task.dueDate);
-        return taskDate.toDateString() === date.toDateString() && task.status === 'completed';
+        const taskDate = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
+        return taskDate.toDateString() === date.toDateString() && task.completed;
       }).length;
       
       weekDays.push({

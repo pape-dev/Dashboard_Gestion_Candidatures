@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +7,19 @@ import { Input } from "@/components/ui/input";
 import { 
   Search, MapPin, Calendar, Building, Star, 
   ExternalLink, Bookmark, Filter, Briefcase,
-  Clock, Euro, Users
+  Clock, Euro, Users, Plus
 } from "lucide-react";
+import { useAppContext } from "@/contexts/AppContext";
+import { useToast } from "@/hooks/use-toast";
+import ApplicationForm from "@/components/ApplicationForm";
 
 const JobSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
+  const { addApplication } = useAppContext();
+  const { toast } = useToast();
   
+  // Données d'exemple d'offres d'emploi (normalement viendraient d'une API)
   const jobOffers = [
     {
       id: 1,
@@ -28,7 +33,8 @@ const JobSearch = () => {
       description: "Rejoignez une équipe dynamique pour développer des applications web innovantes. Vous travaillerez sur des projets variés avec les dernières technologies.",
       requirements: ["React", "Node.js", "TypeScript", "MongoDB"],
       benefits: ["Télétravail", "Tickets restaurant", "Mutuelle", "Formation"],
-      saved: false
+      saved: false,
+      url: "https://example.com/job1"
     },
     {
       id: 2,
@@ -42,7 +48,8 @@ const JobSearch = () => {
       description: "Nous recherchons un designer expérimenté pour concevoir des interfaces utilisateur exceptionnelles pour nos clients.",
       requirements: ["Figma", "Adobe Creative Suite", "Design System", "Prototypage"],
       benefits: ["Remote", "Congés illimités", "Budget formation", "Équipement fourni"],
-      saved: true
+      saved: true,
+      url: "https://example.com/job2"
     },
     {
       id: 3,
@@ -56,7 +63,8 @@ const JobSearch = () => {
       description: "Pilotez le développement de nos produits digitaux et travaillez étroitement avec les équipes techniques et marketing.",
       requirements: ["Product Management", "Analytics", "Roadmap", "Agile"],
       benefits: ["Stock-options", "Flexible", "Team building", "Conciergerie"],
-      saved: false
+      saved: false,
+      url: "https://example.com/job3"
     },
     {
       id: 4,
@@ -70,9 +78,22 @@ const JobSearch = () => {
       description: "Analysez et exploitez les données pour générer des insights business et améliorer nos algorithmes de recommandation.",
       requirements: ["Python", "Machine Learning", "SQL", "Statistics"],
       benefits: ["Formation", "Congés supplémentaires", "Café illimité", "Salle de sport"],
-      saved: true
+      saved: true,
+      url: "https://example.com/job4"
     }
   ];
+
+  const filteredJobs = jobOffers.filter(job => {
+    const matchesSearch = !searchTerm || 
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.requirements.some(req => req.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesLocation = !location || 
+      job.location.toLowerCase().includes(location.toLowerCase());
+    
+    return matchesSearch && matchesLocation;
+  });
 
   const getTypeColor = (type: string) => {
     const colors = {
@@ -91,6 +112,54 @@ const JobSearch = () => {
       "Présentiel": "bg-gray-100 text-gray-800"
     };
     return colors[remote as keyof typeof colors] || "bg-gray-100 text-gray-800";
+  };
+
+  const handleApply = async (job: any) => {
+    try {
+      const salaryMatch = job.salary.match(/(\d+)-(\d+)k/);
+      const salaryMin = salaryMatch ? parseInt(salaryMatch[1]) * 1000 : null;
+      const salaryMax = salaryMatch ? parseInt(salaryMatch[2]) * 1000 : null;
+
+      const applicationData = {
+        company: job.company,
+        position: job.title,
+        location: job.location,
+        status: "En cours",
+        applied_date: new Date().toISOString().split('T')[0],
+        salary_min: salaryMin,
+        salary_max: salaryMax,
+        salary_currency: "€",
+        description: job.description,
+        priority: "medium",
+        contact_person: null,
+        contact_email: null,
+        next_step: "Candidature envoyée",
+        job_url: job.url,
+        notes: `Candidature via JobTracker Pro - ${job.requirements.join(', ')}`,
+        company_logo_url: null,
+      };
+
+      await addApplication(applicationData);
+      
+      toast({
+        title: "Candidature créée",
+        description: `Candidature pour ${job.title} chez ${job.company} ajoutée à votre suivi`,
+      });
+    } catch (error) {
+      console.error('Erreur lors de la candidature:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la candidature",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSave = (jobId: number) => {
+    toast({
+      title: "Offre sauvegardée",
+      description: "L'offre a été ajoutée à vos favoris",
+    });
   };
 
   return (
@@ -142,7 +211,7 @@ const JobSearch = () => {
 
         {/* Résultats */}
         <div className="grid gap-6">
-          {jobOffers.map((job) => (
+          {filteredJobs.map((job) => (
             <Card key={job.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -180,12 +249,15 @@ const JobSearch = () => {
                       variant="ghost" 
                       size="sm"
                       className={job.saved ? "text-yellow-600" : "text-gray-400"}
+                      onClick={() => handleSave(job.id)}
                     >
                       <Star className={`h-4 w-4 ${job.saved ? "fill-current" : ""}`} />
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Voir l'offre
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={job.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Voir l'offre
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -223,11 +295,19 @@ const JobSearch = () => {
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleSave(job.id)}
+                    >
                       <Bookmark className="h-4 w-4 mr-2" />
                       Sauvegarder
                     </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700" size="sm">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700" 
+                      size="sm"
+                      onClick={() => handleApply(job)}
+                    >
                       <Briefcase className="h-4 w-4 mr-2" />
                       Postuler
                     </Button>
@@ -237,6 +317,56 @@ const JobSearch = () => {
             </Card>
           ))}
         </div>
+
+        {/* Empty State */}
+        {filteredJobs.length === 0 && (
+          <Card className="text-center py-16">
+            <CardContent>
+              <div className="max-w-md mx-auto">
+                <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900 w-fit mx-auto mb-6">
+                  <Search className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                  Aucune offre trouvée
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                  Aucune offre ne correspond à vos critères de recherche
+                </p>
+                <Button 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setLocation("");
+                  }}
+                  variant="outline"
+                >
+                  Réinitialiser les filtres
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Suggestion d'ajout manuel */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  Vous avez trouvé une offre ailleurs ?
+                </h3>
+                <p className="text-blue-700">
+                  Ajoutez manuellement une candidature pour la suivre dans votre dashboard
+                </p>
+              </div>
+              <ApplicationForm>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter une candidature
+                </Button>
+              </ApplicationForm>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

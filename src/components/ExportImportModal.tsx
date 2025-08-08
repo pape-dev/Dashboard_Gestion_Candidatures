@@ -14,23 +14,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
-}
+import { Application } from "@/contexts/AppContext";
 
 interface ExportImportModalProps {
   applications: Application[];
@@ -54,16 +38,13 @@ const ExportImportModal = ({ applications, onImport, trigger }: ExportImportModa
     const fieldsToExport = [];
     
     if (exportFields.basic) {
-      fieldsToExport.push('company', 'position', 'location', 'status', 'appliedDate', 'salary');
+      fieldsToExport.push('company', 'position', 'location', 'status', 'applied_date', 'salary_min', 'salary_max', 'salary_currency');
     }
     if (exportFields.contact) {
-      fieldsToExport.push('contactPerson', 'contactEmail');
+      fieldsToExport.push('contact_person', 'contact_email');
     }
     if (exportFields.metadata) {
-      fieldsToExport.push('description', 'priority', 'nextStep');
-    }
-    if (exportFields.tags) {
-      fieldsToExport.push('tags');
+      fieldsToExport.push('description', 'priority', 'next_step', 'notes');
     }
 
     const dataToExport = applications.map(app => {

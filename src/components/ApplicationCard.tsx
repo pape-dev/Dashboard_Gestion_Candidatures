@@ -10,32 +10,16 @@ import {
 } from "lucide-react";
 import ApplicationActions from "@/components/ApplicationActions";
 
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  location: string;
-  status: string;
-  appliedDate: string;
-  salary: string;
-  statusColor: string;
-  description: string;
-  priority: string;
-  contactPerson: string;
-  contactEmail: string;
-  nextStep: string;
-  tags: string[];
-  logo?: string;
-}
+import { Application } from "@/contexts/AppContext";
 
 interface ApplicationCardProps {
   application: Application;
   isSelected: boolean;
-  onSelect: (id: number) => void;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  onView?: (id: number) => void;
-  onStatusChange?: (id: number, status: string) => void;
+  onSelect: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onView?: (id: string) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
 const ApplicationCard = ({ 
@@ -70,7 +54,7 @@ const ApplicationCard = ({
     }
   };
 
-  const getStatusGradient = (status: string) => {
+  const getStatusGradient = (status: string | null) => {
     switch (status) {
       case "En cours":
         return "from-blue-500 to-blue-600";
@@ -86,7 +70,9 @@ const ApplicationCard = ({
   };
 
   const priorityConfig = getPriorityConfig(application.priority);
-  const daysSinceApplied = Math.floor((new Date().getTime() - new Date(application.appliedDate).getTime()) / (1000 * 60 * 60 * 24));
+  const daysSinceApplied = application.applied_date 
+    ? Math.floor((new Date().getTime() - new Date(application.applied_date).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   return (
     <Card className={`group relative overflow-hidden ${priorityConfig.bg} border-0 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] ${isSelected ? 'ring-2 ring-blue-500 shadow-xl' : ''}`}>
@@ -117,7 +103,7 @@ const ApplicationCard = ({
           {/* Company Logo */}
           <div className="relative">
             <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-slate-700 shadow-xl group-hover:scale-110 transition-transform duration-300">
-              <AvatarImage src={application.logo} alt={application.company} />
+              <AvatarImage src={application.company_logo_url || undefined} alt={application.company} />
               <AvatarFallback className={`bg-gradient-to-r ${getStatusGradient(application.status)} text-white font-bold text-lg`}>
                 {application.company[0]}
               </AvatarFallback>
@@ -125,7 +111,7 @@ const ApplicationCard = ({
             
             {/* Status Badge on Logo */}
             <div className="absolute -bottom-2 -right-2">
-              <Badge className={`${application.statusColor} text-xs font-semibold px-2 py-1 shadow-lg`}>
+              <Badge className={`${getStatusColor(application.status)} text-xs font-semibold px-2 py-1 shadow-lg`}>
                 {application.status}
               </Badge>
             </div>
@@ -161,71 +147,80 @@ const ApplicationCard = ({
             </div>
 
             {/* Description */}
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-              {application.description}
-            </p>
+            {application.description && (
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                {application.description}
+              </p>
+            )}
             
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {application.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs px-3 py-1 bg-white/80 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
 
             {/* Info Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-2 p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl">
                 <MapPin className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{application.location}</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{application.location || 'Non spécifié'}</span>
               </div>
               
               <div className="flex items-center gap-2 p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl">
                 <Calendar className="h-4 w-4 text-slate-500" />
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {new Date(application.appliedDate).toLocaleDateString('fr-FR', { 
+                  {application.applied_date ? new Date(application.applied_date).toLocaleDateString('fr-FR', { 
                     day: 'numeric', 
                     month: 'short' 
-                  })}
+                  }) : 'Non spécifié'}
                 </span>
               </div>
               
               <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950 rounded-xl">
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{application.salary}</span>
+                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                  {application.salary_min && application.salary_max 
+                    ? `${application.salary_min}-${application.salary_max}${application.salary_currency}` 
+                    : 'Non spécifié'}
+                </span>
               </div>
               
               <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-xl">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-300 truncate">{application.nextStep}</span>
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300 truncate">{application.next_step || 'Aucune action'}</span>
               </div>
             </div>
 
             {/* Footer Section */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-4">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    {application.contactPerson.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {application.contactPerson}
+                {application.contact_person && (
+                  <>
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                        {application.contact_person.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {application.contact_person}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Contact principal
+                      </div>
+                    </div>
+                    {application.contact_email && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600"
+                        onClick={() => window.open(`mailto:${application.contact_email}`)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+                {!application.contact_person && (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Aucun contact spécifié
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    Contact principal
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600"
-                  onClick={() => window.open(`mailto:${application.contactEmail}`)}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                )}
               </div>
               
               <div className="flex items-center gap-2">
@@ -247,6 +242,17 @@ const ApplicationCard = ({
       </CardContent>
     </Card>
   );
+};
+
+const getStatusColor = (status: string | null) => {
+  switch (status) {
+    case "En cours": return "bg-blue-100 text-blue-800 border-blue-200";
+    case "Entretien": return "bg-green-100 text-green-800 border-green-200";
+    case "En attente": return "bg-amber-100 text-amber-800 border-amber-200";
+    case "Accepté": return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "Refusé": return "bg-red-100 text-red-800 border-red-200";
+    default: return "bg-gray-100 text-gray-800 border-gray-200";
+  }
 };
 
 export default ApplicationCard;
