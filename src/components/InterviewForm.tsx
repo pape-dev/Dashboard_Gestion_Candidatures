@@ -5,19 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, MapPin, Users, Plus, Loader2 } from "lucide-react";
+import { Calendar, Plus, Loader2 } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
 const interviewSchema = z.object({
   application_id: z.string().optional(),
@@ -109,7 +101,6 @@ const InterviewForm = ({ children, interview, onSuccess }: InterviewFormProps) =
       form.setValue("application_id", "");
       form.setValue("company", "");
       form.setValue("position", "");
-      form.setValue("interviewer", "");
       return;
     }
     
@@ -141,290 +132,211 @@ const InterviewForm = ({ children, interview, onSuccess }: InterviewFormProps) =
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {/* Sélection d'une candidature existante */}
-            <FormField
-              control={form.control}
-              name="application_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Candidature associée (optionnel)</FormLabel>
-                  <Select value={field.value} onValueChange={handleApplicationSelect}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir une candidature existante" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Aucune (entretien indépendant)</SelectItem>
-                      {applications.map((app) => (
-                        <SelectItem key={app.id} value={app.id}>
-                          {app.company} - {app.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {/* Sélection d'une candidature existante */}
+          <div className="space-y-2">
+            <Label htmlFor="application_id">Candidature associée (optionnel)</Label>
+            <Select 
+              value={form.watch('application_id')} 
+              onValueChange={handleApplicationSelect}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir une candidature existante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucune (entretien indépendant)</SelectItem>
+                {applications.map((app) => (
+                  <SelectItem key={app.id} value={app.id}>
+                    {app.company} - {app.position}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">Entreprise *</Label>
+              <Input
+                id="company"
+                placeholder="Nom de l'entreprise"
+                {...form.register('company')}
+              />
+              {form.formState.errors.company && (
+                <p className="text-sm text-red-600">{form.formState.errors.company.message}</p>
               )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Entreprise *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nom de l'entreprise"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Poste *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Intitulé du poste"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="interview_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="position">Poste *</Label>
+              <Input
+                id="position"
+                placeholder="Intitulé du poste"
+                {...form.register('position')}
               />
+              {form.formState.errors.position && (
+                <p className="text-sm text-red-600">{form.formState.errors.position.message}</p>
+              )}
+            </div>
+          </div>
 
-              <FormField
-                control={form.control}
-                name="interview_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Heure *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="time"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="interview_date">Date *</Label>
+              <Input
+                id="interview_date"
+                type="date"
+                {...form.register('interview_date')}
               />
+              {form.formState.errors.interview_date && (
+                <p className="text-sm text-red-600">{form.formState.errors.interview_date.message}</p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type d'entretien</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner le type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Entretien RH">Entretien RH</SelectItem>
-                        <SelectItem value="Entretien technique">Entretien technique</SelectItem>
-                        <SelectItem value="Entretien avec l'équipe">Entretien avec l'équipe</SelectItem>
-                        <SelectItem value="Entretien final">Entretien final</SelectItem>
-                        <SelectItem value="Entretien téléphonique">Entretien téléphonique</SelectItem>
-                        <SelectItem value="Présentation">Présentation</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="interview_time">Heure *</Label>
+              <Input
+                id="interview_time"
+                type="time"
+                {...form.register('interview_time')}
               />
-
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Durée estimée</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Durée" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="30min">30 minutes</SelectItem>
-                        <SelectItem value="45min">45 minutes</SelectItem>
-                        <SelectItem value="1h">1 heure</SelectItem>
-                        <SelectItem value="1h30">1h30</SelectItem>
-                        <SelectItem value="2h">2 heures</SelectItem>
-                        <SelectItem value="2h30">2h30</SelectItem>
-                        <SelectItem value="3h">3 heures</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {form.formState.errors.interview_time && (
+                <p className="text-sm text-red-600">{form.formState.errors.interview_time.message}</p>
+              )}
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lieu / Format</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Visioconférence, Paris 9ème, etc."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="interviewer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Intervieweur</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Nom de l'intervieweur"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="à confirmer">À confirmer</SelectItem>
-                      <SelectItem value="confirmé">Confirmé</SelectItem>
-                      <SelectItem value="en attente">En attente</SelectItem>
-                      <SelectItem value="reporté">Reporté</SelectItem>
-                      <SelectItem value="annulé">Annulé</SelectItem>
-                      <SelectItem value="terminé">Terminé</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="meeting_link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lien de visioconférence</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://meet.google.com/xyz-abc-def"
-                      type="url"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes / Préparation</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notes importantes, points à aborder, documents à préparer..."
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="type">Type d'entretien</Label>
+              <Select 
+                value={form.watch('type')} 
+                onValueChange={(value) => form.setValue('type', value)}
               >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {interview ? "Modification..." : "Planification..."}
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    {interview ? "Modifier l'entretien" : "Planifier l'entretien"}
-                  </>
-                )}
-              </Button>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Entretien RH">Entretien RH</SelectItem>
+                  <SelectItem value="Entretien technique">Entretien technique</SelectItem>
+                  <SelectItem value="Entretien avec l'équipe">Entretien avec l'équipe</SelectItem>
+                  <SelectItem value="Entretien final">Entretien final</SelectItem>
+                  <SelectItem value="Entretien téléphonique">Entretien téléphonique</SelectItem>
+                  <SelectItem value="Présentation">Présentation</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </form>
-        </Form>
+
+            <div className="space-y-2">
+              <Label htmlFor="duration">Durée estimée</Label>
+              <Select 
+                value={form.watch('duration')} 
+                onValueChange={(value) => form.setValue('duration', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Durée" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="30min">30 minutes</SelectItem>
+                  <SelectItem value="45min">45 minutes</SelectItem>
+                  <SelectItem value="1h">1 heure</SelectItem>
+                  <SelectItem value="1h30">1h30</SelectItem>
+                  <SelectItem value="2h">2 heures</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Lieu / Format</Label>
+              <Input
+                id="location"
+                placeholder="Ex: Visioconférence, Paris 9ème"
+                {...form.register('location')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="interviewer">Intervieweur</Label>
+              <Input
+                id="interviewer"
+                placeholder="Nom de l'intervieweur"
+                {...form.register('interviewer')}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Statut</Label>
+            <Select 
+              value={form.watch('status')} 
+              onValueChange={(value) => form.setValue('status', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="à confirmer">À confirmer</SelectItem>
+                <SelectItem value="confirmé">Confirmé</SelectItem>
+                <SelectItem value="en attente">En attente</SelectItem>
+                <SelectItem value="reporté">Reporté</SelectItem>
+                <SelectItem value="annulé">Annulé</SelectItem>
+                <SelectItem value="terminé">Terminé</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="meeting_link">Lien de visioconférence</Label>
+            <Input
+              id="meeting_link"
+              placeholder="https://meet.google.com/xyz-abc-def"
+              type="url"
+              {...form.register('meeting_link')}
+            />
+            {form.formState.errors.meeting_link && (
+              <p className="text-sm text-red-600">{form.formState.errors.meeting_link.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes / Préparation</Label>
+            <Textarea
+              id="notes"
+              placeholder="Notes importantes, points à aborder..."
+              rows={3}
+              {...form.register('notes')}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {interview ? "Modification..." : "Planification..."}
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {interview ? "Modifier l'entretien" : "Planifier l'entretien"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

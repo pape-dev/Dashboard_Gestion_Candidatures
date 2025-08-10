@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import {
   Users, Star, Clock, Sparkles, ArrowRight, ExternalLink 
 } from "lucide-react";
 import ApplicationActions from "@/components/ApplicationActions";
-
 import { Application } from "@/contexts/AppContext";
 
 interface ApplicationCardProps {
@@ -31,7 +29,7 @@ const ApplicationCard = ({
   onView, 
   onStatusChange 
 }: ApplicationCardProps) => {
-  const getPriorityConfig = (priority: string) => {
+  const getPriorityConfig = (priority: string | null) => {
     switch (priority) {
       case "high":
         return {
@@ -152,7 +150,6 @@ const ApplicationCard = ({
                 {application.description}
               </p>
             )}
-            
 
             {/* Info Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -5,17 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Loader2, Users } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -107,181 +100,123 @@ const ContactForm = ({ children, contact, onSuccess }: ContactFormProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nom complet *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Marie Dupont"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nom complet *</Label>
+            <Input
+              id="name"
+              placeholder="Ex: Marie Dupont"
+              {...form.register('name')}
             />
+            {form.formState.errors.name && (
+              <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+            )}
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="marie.dupont@entreprise.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="marie.dupont@entreprise.com"
+                {...form.register('email')}
               />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
+              )}
+            </div>
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="tel"
-                        placeholder="+33 6 12 34 56 78"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Téléphone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+33 6 12 34 56 78"
+                {...form.register('phone')}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">Entreprise</Label>
+              <Input
+                id="company"
+                placeholder="Ex: Google"
+                {...form.register('company')}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Entreprise</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Google"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Poste</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Responsable RH"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="position">Poste</Label>
+              <Input
+                id="position"
+                placeholder="Ex: Responsable RH"
+                {...form.register('position')}
               />
             </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="linkedin_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>LinkedIn</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="url"
-                      placeholder="https://linkedin.com/in/marie-dupont"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="linkedin_url">LinkedIn</Label>
+            <Input
+              id="linkedin_url"
+              type="url"
+              placeholder="https://linkedin.com/in/marie-dupont"
+              {...form.register('linkedin_url')}
             />
+            {form.formState.errors.linkedin_url && (
+              <p className="text-sm text-red-600">{form.formState.errors.linkedin_url.message}</p>
+            )}
+          </div>
 
-            <FormField
-              control={form.control}
-              name="last_contact_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dernier contact</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="last_contact_date">Dernier contact</Label>
+            <Input
+              id="last_contact_date"
+              type="date"
+              {...form.register('last_contact_date')}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notes sur ce contact..."
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Notes sur ce contact..."
+              rows={3}
+              {...form.register('notes')}
             />
+          </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {contact ? "Modification..." : "Création..."}
-                  </>
-                ) : (
-                  <>
-                    <Users className="h-4 w-4 mr-2" />
-                    {contact ? "Modifier le contact" : "Ajouter le contact"}
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {contact ? "Modification..." : "Création..."}
+                </>
+              ) : (
+                <>
+                  <Users className="h-4 w-4 mr-2" />
+                  {contact ? "Modifier le contact" : "Ajouter le contact"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -6,17 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, Target } from "lucide-react";
 import { useAppContext } from "@/contexts/AppContext";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 
 const taskSchema = z.object({
   application_id: z.string().optional(),
@@ -106,190 +99,142 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="application_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Candidature associée (optionnel)</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir une candidature" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">Aucune</SelectItem>
-                      {applications.map((app) => (
-                        <SelectItem key={app.id} value={app.id}>
-                          {app.company} - {app.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="application_id">Candidature associée (optionnel)</Label>
+            <Select 
+              value={form.watch('application_id')} 
+              onValueChange={(value) => form.setValue('application_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir une candidature" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Aucune</SelectItem>
+                {applications.map((app) => (
+                  <SelectItem key={app.id} value={app.id}>
+                    {app.company} - {app.position}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Titre *</Label>
+            <Input
+              id="title"
+              placeholder="Ex: Préparer entretien TechCorp"
+              {...form.register('title')}
             />
+            {form.formState.errors.title && (
+              <p className="text-sm text-red-600">{form.formState.errors.title.message}</p>
+            )}
+          </div>
 
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Titre *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Préparer entretien TechCorp"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Détails de la tâche..."
+              rows={3}
+              {...form.register('description')}
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Détails de la tâche..."
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="due_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date d'échéance</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priorité</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="high">Haute</SelectItem>
-                        <SelectItem value="medium">Moyenne</SelectItem>
-                        <SelectItem value="low">Faible</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="due_date">Date d'échéance</Label>
+              <Input
+                id="due_date"
+                type="date"
+                {...form.register('due_date')}
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Catégorie</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="application">Candidature</SelectItem>
-                        <SelectItem value="interview">Entretien</SelectItem>
-                        <SelectItem value="follow-up">Suivi</SelectItem>
-                        <SelectItem value="research">Recherche</SelectItem>
-                        <SelectItem value="other">Autre</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Statut</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="todo">À faire</SelectItem>
-                        <SelectItem value="in-progress">En cours</SelectItem>
-                        <SelectItem value="completed">Terminé</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priorité</Label>
+              <Select 
+                value={form.watch('priority')} 
+                onValueChange={(value) => form.setValue('priority', value as any)}
               >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {task ? "Modification..." : "Création..."}
-                  </>
-                ) : (
-                  <>
-                    <Target className="h-4 w-4 mr-2" />
-                    {task ? "Modifier la tâche" : "Créer la tâche"}
-                  </>
-                )}
-              </Button>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">Haute</SelectItem>
+                  <SelectItem value="medium">Moyenne</SelectItem>
+                  <SelectItem value="low">Faible</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </form>
-        </Form>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Catégorie</Label>
+              <Select 
+                value={form.watch('category')} 
+                onValueChange={(value) => form.setValue('category', value as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="application">Candidature</SelectItem>
+                  <SelectItem value="interview">Entretien</SelectItem>
+                  <SelectItem value="follow-up">Suivi</SelectItem>
+                  <SelectItem value="research">Recherche</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Statut</Label>
+              <Select 
+                value={form.watch('status')} 
+                onValueChange={(value) => form.setValue('status', value as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">À faire</SelectItem>
+                  <SelectItem value="in-progress">En cours</SelectItem>
+                  <SelectItem value="completed">Terminé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {task ? "Modification..." : "Création..."}
+                </>
+              ) : (
+                <>
+                  <Target className="h-4 w-4 mr-2" />
+                  {task ? "Modifier la tâche" : "Créer la tâche"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

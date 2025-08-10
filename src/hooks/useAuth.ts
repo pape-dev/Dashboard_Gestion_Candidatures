@@ -17,6 +17,11 @@ export const useAuth = () => {
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Créer le profil utilisateur s'il n'existe pas
+        if (session?.user) {
+          await ensureUserProfile(session.user);
+        }
       } catch (error) {
         console.error('Erreur lors de la récupération de la session:', error);
         toast({
@@ -41,10 +46,11 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      if (event === 'SIGNED_IN') {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await ensureUserProfile(session.user);
         toast({
           title: "Connexion réussie",
-          description: `Bienvenue ${session?.user?.user_metadata?.first_name || session?.user?.email}!`,
+          description: `Bienvenue ${session.user.user_metadata?.first_name || session.user.email}!`,
         });
       } else if (event === 'SIGNED_OUT') {
         toast({
@@ -56,6 +62,35 @@ export const useAuth = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const ensureUserProfile = async (user: User) => {
+    try {
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // Profil n'existe pas, le créer
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: user.id,
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+        if (insertError) {
+          console.error('Erreur lors de la création du profil:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification du profil:', error);
+    }
+  };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {

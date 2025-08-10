@@ -19,15 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -135,333 +126,225 @@ const ApplicationForm = ({ children, application, onSuccess }: ApplicationFormPr
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold">
             {application ? "Modifier la candidature" : "Nouvelle Candidature"}
           </DialogTitle>
-          <DialogDescription className="text-gray-600">
-            {application ? "Modifiez les informations de votre candidature" : "Ajoutez une nouvelle candidature à votre suivi d'emploi"}
+          <DialogDescription>
+            {application ? "Modifiez les informations de votre candidature" : "Ajoutez une nouvelle candidature à votre suivi"}
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Entreprise *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: Google, Microsoft..."
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">Entreprise *</Label>
+              <Input 
+                id="company"
+                placeholder="Ex: Google, Microsoft..."
+                {...form.register('company')}
               />
-
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Poste *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: Développeur Frontend..."
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Localisation</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: Paris, Remote..."
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="applied_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Date de candidature</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal border-2 focus:border-blue-500",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Sélectionner une date</span>
-                            )}
-                            <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="salary_min"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Salaire min</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        placeholder="40000"
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="salary_max"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Salaire max</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        placeholder="60000"
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Statut</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 focus:border-blue-500">
-                          <SelectValue placeholder="Sélectionner un statut" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="En cours">En cours</SelectItem>
-                        <SelectItem value="Entretien">Entretien</SelectItem>
-                        <SelectItem value="En attente">En attente</SelectItem>
-                        <SelectItem value="Accepté">Accepté</SelectItem>
-                        <SelectItem value="Refusé">Refusé</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Priorité</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="border-2 focus:border-blue-500">
-                          <SelectValue placeholder="Sélectionner la priorité" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="high">Haute</SelectItem>
-                        <SelectItem value="medium">Moyenne</SelectItem>
-                        <SelectItem value="low">Faible</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700">Description du poste</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Décrivez le poste et les responsabilités..."
-                      className="border-2 focus:border-blue-500 transition-colors min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              {form.formState.errors.company && (
+                <p className="text-sm text-red-600">{form.formState.errors.company.message}</p>
               )}
-            />
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contact_person"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Personne de contact</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: Marie Dupont"
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="position">Poste *</Label>
+              <Input 
+                id="position"
+                placeholder="Ex: Développeur Frontend..."
+                {...form.register('position')}
               />
+              {form.formState.errors.position && (
+                <p className="text-sm text-red-600">{form.formState.errors.position.message}</p>
+              )}
+            </div>
+          </div>
 
-              <FormField
-                control={form.control}
-                name="contact_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700">Email de contact</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email"
-                        placeholder="marie.dupont@entreprise.com"
-                        className="border-2 focus:border-blue-500 transition-colors"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Localisation</Label>
+              <Input 
+                id="location"
+                placeholder="Ex: Paris, Remote..."
+                {...form.register('location')}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="job_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700">Lien de l'offre</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="url"
-                      placeholder="https://..."
-                      className="border-2 focus:border-blue-500 transition-colors"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs text-gray-500">
-                    URL vers l'offre d'emploi originale
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <Label>Date de candidature</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full pl-3 text-left font-normal",
+                      !form.watch('applied_date') && "text-muted-foreground"
+                    )}
+                  >
+                    {form.watch('applied_date') ? (
+                      format(form.watch('applied_date'), "dd/MM/yyyy")
+                    ) : (
+                      <span>Sélectionner une date</span>
+                    )}
+                    <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={form.watch('applied_date')}
+                    onSelect={(date) => form.setValue('applied_date', date || new Date())}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-semibold text-gray-700">Notes</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Notes personnelles sur cette candidature..."
-                      className="border-2 focus:border-blue-500 transition-colors"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary_min">Salaire min</Label>
+              <Input 
+                id="salary_min"
+                type="number"
+                placeholder="40000"
+                {...form.register('salary_min', { valueAsNumber: true })}
+              />
+            </div>
 
-            <DialogFooter className="gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)}
-                className="px-6"
-                disabled={loading}
+            <div className="space-y-2">
+              <Label htmlFor="salary_max">Salaire max</Label>
+              <Input 
+                id="salary_max"
+                type="number"
+                placeholder="60000"
+                {...form.register('salary_max', { valueAsNumber: true })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Statut</Label>
+              <Select 
+                value={form.watch('status')} 
+                onValueChange={(value) => form.setValue('status', value)}
               >
-                Annuler
-              </Button>
-              <Button 
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-6"
-                disabled={loading}
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="En cours">En cours</SelectItem>
+                  <SelectItem value="Entretien">Entretien</SelectItem>
+                  <SelectItem value="En attente">En attente</SelectItem>
+                  <SelectItem value="Accepté">Accepté</SelectItem>
+                  <SelectItem value="Refusé">Refusé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priorité</Label>
+              <Select 
+                value={form.watch('priority')} 
+                onValueChange={(value) => form.setValue('priority', value as any)}
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {application ? "Modification..." : "Création..."}
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {application ? "Modifier" : "Créer la candidature"}
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <SelectTrigger>
+                  <SelectValue placeholder="Priorité" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">Haute</SelectItem>
+                  <SelectItem value="medium">Moyenne</SelectItem>
+                  <SelectItem value="low">Faible</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description du poste</Label>
+            <Textarea
+              id="description"
+              placeholder="Décrivez le poste et les responsabilités..."
+              {...form.register('description')}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact_person">Personne de contact</Label>
+              <Input 
+                id="contact_person"
+                placeholder="Ex: Marie Dupont"
+                {...form.register('contact_person')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contact_email">Email de contact</Label>
+              <Input 
+                id="contact_email"
+                type="email"
+                placeholder="marie.dupont@entreprise.com"
+                {...form.register('contact_email')}
+              />
+              {form.formState.errors.contact_email && (
+                <p className="text-sm text-red-600">{form.formState.errors.contact_email.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="job_url">Lien de l'offre</Label>
+            <Input 
+              id="job_url"
+              type="url"
+              placeholder="https://..."
+              {...form.register('job_url')}
+            />
+            {form.formState.errors.job_url && (
+              <p className="text-sm text-red-600">{form.formState.errors.job_url.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea 
+              id="notes"
+              placeholder="Notes personnelles sur cette candidature..."
+              {...form.register('notes')}
+            />
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button 
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {application ? "Modification..." : "Création..."}
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {application ? "Modifier" : "Créer la candidature"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
