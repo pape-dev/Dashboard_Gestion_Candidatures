@@ -140,8 +140,12 @@ export const formatPhoneNumber = (phone: string): string => {
 // Validation d'email améliorée
 export const validateEmail = (email: string): boolean => {
   if (!email) return false;
-  
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  // Regex sans échappements inutiles
+  const emailRegex = new RegExp(
+    "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@" +
+      "[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?" +
+      "(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+  );
   return emailRegex.test(email) && email.length <= 254;
 };
 

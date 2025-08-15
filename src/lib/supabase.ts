@@ -1,12 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
+import config from '@/config/environment';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Valeurs de secours pour éviter un crash en développement si .env.local n'est pas encore configuré
+const fallbackUrl = 'http://localhost:54321';
+const fallbackAnon = 'dev-anon-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Variables d\'environnement Supabase manquantes. Veuillez configurer VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY');
-}
+const supabaseUrl = config.supabase.url || (import.meta.env.DEV ? fallbackUrl : '');
+const supabaseAnonKey = config.supabase.anonKey || (import.meta.env.DEV ? fallbackAnon : '');
+
+// Expose configuration flags so the app can avoid network calls when not configured
+export const isSupabaseConfigured = Boolean(config.supabase.url && config.supabase.anonKey);
+export const isUsingFallbackSupabase = !isSupabaseConfigured && import.meta.env.DEV;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -17,7 +22,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'job-tracker-pro@1.0.0',
+      'X-Client-Info': `${config.app.name}@${config.app.version}`,
     },
   },
 });

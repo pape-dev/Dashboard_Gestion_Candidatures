@@ -34,6 +34,8 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
   const [loading, setLoading] = useState(false);
   const { applications, addTask, updateTask } = useAppContext();
 
+  console.log('🔍 TaskForm: Rendu avec applications:', applications?.length, 'task:', task);
+
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
@@ -49,6 +51,7 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
 
   const handleSubmit = async (data: TaskFormData) => {
     try {
+      console.log('🔍 TaskForm: Début handleSubmit avec data:', data);
       setLoading(true);
       
       const taskData = {
@@ -63,25 +66,37 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
         completed_at: data.status === 'completed' ? new Date().toISOString() : null,
       };
 
+      console.log('🔍 TaskForm: taskData préparé:', taskData);
+
       if (task) {
+        console.log('🔍 TaskForm: Mise à jour de la tâche:', task.id);
         await updateTask(task.id, taskData);
       } else {
+        console.log('🔍 TaskForm: Création d\'une nouvelle tâche');
         await addTask(taskData);
       }
       
+      console.log('✅ TaskForm: Tâche sauvegardée avec succès');
       form.reset();
       setOpen(false);
       onSuccess?.();
       
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
+      console.error('❌ TaskForm: Erreur lors de la sauvegarde:', error);
+      // Afficher l'erreur à l'utilisateur
+      alert(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    console.log('🔍 TaskForm: handleOpenChange appelé avec:', newOpen);
+    setOpen(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 gap-2">
@@ -111,11 +126,11 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Aucune</SelectItem>
-                {applications.map((app) => (
+                {applications?.map((app) => (
                   <SelectItem key={app.id} value={app.id}>
                     {app.company} - {app.position}
                   </SelectItem>
-                ))}
+                )) || []}
               </SelectContent>
             </Select>
           </div>

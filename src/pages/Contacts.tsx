@@ -25,13 +25,13 @@ const Contacts = () => {
     contacts, 
     loading, 
     error,
+    addContact, 
     updateContact, 
-    deleteContact,
-    refreshData 
+    deleteContact
   } = useAppContext();
 
   useEffect(() => {
-    refreshData();
+    // refreshData(); // Removed as per edit hint
   }, []);
 
   const filteredContacts = contacts.filter(contact =>
@@ -65,8 +65,8 @@ const Contacts = () => {
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Chargement des contacts...</p>
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">Chargement...</p>
           </div>
         </div>
       </Layout>

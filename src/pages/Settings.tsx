@@ -214,15 +214,13 @@ const Settings = () => {
         supabase.from('user_profiles').delete().eq('id', user.id),
       ]);
 
-      // Supprimer le compte utilisateur
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
-
+      // Note: La suppression du compte auth nécessite une clé service_role côté serveur.
+      // Ici, on supprime les données et on déconnecte l'utilisateur.
       await signOut();
       
       toast({
         title: "Compte supprimé",
-        description: "Votre compte a été supprimé définitivement",
+        description: "Vos données ont été supprimées et vous avez été déconnecté. Pour une suppression complète du compte, contactez le support.",
       });
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);

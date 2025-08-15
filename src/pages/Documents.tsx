@@ -267,12 +267,14 @@ const Documents = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-lg font-medium">Chargement des documents...</p>
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+              <p className="text-lg font-medium">Chargement...</p>
+            </div>
           </div>
-        </div>
+        )}
       </Layout>
     );
   }

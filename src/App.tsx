@@ -3,11 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import Applications from "./pages/Applications";
 import Calendar from "./pages/Calendar";
@@ -46,7 +46,7 @@ const AppContent = () => {
   
   useEffect(() => {
     // Log pour debugging
-    console.log('App mounted, user:', user?.email, 'loading:', loading);
+    console.log('🔍 AppContent: App mounted, user:', user?.email, 'loading:', loading);
   }, [user, loading]);
   
   if (loading) {
@@ -55,7 +55,7 @@ const AppContent = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">JobTracker Pro</h2>
-          <p className="text-slate-600 dark:text-slate-400">Initialisation de l'application...</p>
+          <p className="text-slate-600 dark:text-slate-400">Chargement...</p>
         </div>
       </div>
     );
@@ -67,14 +67,18 @@ const AppContent = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       
-      {/* Routes protégées */}
+      {/* Redirection par défaut vers login si non connecté */}
       <Route path="/" element={
-        <ProtectedRoute>
+        user ? (
           <AppProvider>
             <Index />
           </AppProvider>
-        </ProtectedRoute>
+        ) : (
+          <Navigate to="/login" replace />
+        )
       } />
+      
+      {/* Routes protégées */}
       <Route path="/applications" element={
         <ProtectedRoute>
           <AppProvider>

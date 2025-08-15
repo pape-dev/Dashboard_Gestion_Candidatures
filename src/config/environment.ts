@@ -44,12 +44,16 @@ export const config = {
     }
 
     if (errors.length > 0) {
-      throw new Error(`Configuration invalide: ${errors.join(", ")}`);
+      // En développement, on ne bloque pas l'application pour permettre l'affichage de l'UI.
+      // On journalise simplement un avertissement clair.
+      console.warn(`Configuration Supabase manquante: ${errors.join(", ")}. ` +
+        `Ajoutez un fichier .env.local avec VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY pour activer l'authentification.`);
     }
   },
 };
 
 // Validation automatique au chargement
+// En développement, on valide mais sans interrompre l'exécution (voir console.warn ci-dessus)
 if (import.meta.env.DEV) {
   config.validate();
 }

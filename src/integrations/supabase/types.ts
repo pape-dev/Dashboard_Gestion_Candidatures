@@ -14,6 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
+      // Added missing tables used across the app
+      user_documents: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          type: 'cv' | 'portfolio' | 'certificate' | 'other'
+          file_url: string
+          file_size: number | null
+          mime_type: string | null
+          description: string | null
+          is_public: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          type: 'cv' | 'portfolio' | 'certificate' | 'other'
+          file_url: string
+          file_size?: number | null
+          mime_type?: string | null
+          description?: string | null
+          is_public?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          type?: 'cv' | 'portfolio' | 'certificate' | 'other'
+          file_url?: string
+          file_size?: number | null
+          mime_type?: string | null
+          description?: string | null
+          is_public?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_social_links: {
+        Row: {
+          id: string
+          user_id: string
+          platform: 'linkedin' | 'github' | 'twitter' | 'website' | 'portfolio'
+          url: string
+          is_public: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          platform: 'linkedin' | 'github' | 'twitter' | 'website' | 'portfolio'
+          url: string
+          is_public?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          platform?: 'linkedin' | 'github' | 'twitter' | 'website' | 'portfolio'
+          url?: string
+          is_public?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_social_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_analytics: {
+        Row: {
+          id: string
+          user_id: string
+          profile_views: number
+          cv_downloads: number
+          last_profile_update: string | null
+          profile_completion_percentage: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          profile_views?: number
+          cv_downloads?: number
+          last_profile_update?: string | null
+          profile_completion_percentage?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          profile_views?: number
+          cv_downloads?: number
+          last_profile_update?: string | null
+          profile_completion_percentage?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_tags: {
         Row: {
           application_id: string

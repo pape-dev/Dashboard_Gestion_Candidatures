@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-6" />
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 animate-pulse"></div>
           </div>
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Vérification des permissions</h2>
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
           <p className="text-slate-600 dark:text-slate-400">Accès à votre espace sécurisé...</p>
         </div>
       </div>

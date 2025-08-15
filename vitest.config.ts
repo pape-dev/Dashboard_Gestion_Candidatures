@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    // setupFiles removed because file was missing; add one if needed
     css: true,
   },
   resolve: {

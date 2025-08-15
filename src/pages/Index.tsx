@@ -21,14 +21,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 const Index = () => {
-  const { applications, interviews, tasks, getStatistics, loading, refreshData } = useAppContext();
+  const { applications, interviews, tasks, getStatistics, loading } = useAppContext();
   const { user } = useAuth();
   const stats = getStatistics();
   
-  // Refresh data on mount
-  useEffect(() => {
-    refreshData();
-  }, []);
+  console.log('🔍 Index: Rendu avec applications:', applications?.length, 'interviews:', interviews?.length, 'tasks:', tasks?.length);
+  console.log('🔍 Index: Stats calculées:', stats);
   
   // Loading state
   if (loading) {
@@ -37,7 +35,7 @@ const Index = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement du dashboard</h2>
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
             <p className="text-slate-600 dark:text-slate-400">Préparation de vos données...</p>
           </div>
         </div>
@@ -99,49 +97,49 @@ const Index = () => {
                 
                 {/* KPIs en temps réel */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900">
-                        <Briefcase className="h-5 w-5 text-blue-600" />
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg">
+                        <Briefcase className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.totalApplications}</div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">{stats.totalApplications}</div>
                         <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Candidatures</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900">
-                        <Users className="h-5 w-5 text-emerald-600" />
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-lg">
+                        <Users className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.interviewsScheduled}</div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">{stats.interviewsScheduled}</div>
                         <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Entretiens</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900">
-                        <TrendingUp className="h-5 w-5 text-amber-600" />
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 shadow-lg">
+                        <TrendingUp className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.responseRate}%</div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">{stats.responseRate}%</div>
                         <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Taux réponse</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900">
-                        <Target className="h-5 w-5 text-purple-600" />
+                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 shadow-lg">
+                        <Target className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.activeApplications}</div>
+                        <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">{stats.activeApplications}</div>
                         <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">Actives</div>
                       </div>
                     </div>
