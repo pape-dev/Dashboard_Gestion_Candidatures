@@ -30,10 +30,6 @@ const Contacts = () => {
     deleteContact
   } = useAppContext();
 
-  useEffect(() => {
-    // refreshData(); // Removed as per edit hint
-  }, []);
-
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (contact.company && contact.company.toLowerCase().includes(searchTerm.toLowerCase())) ||

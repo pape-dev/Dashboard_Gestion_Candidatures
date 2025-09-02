@@ -1,88 +1,50 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Récupérer la session actuelle
     const getSession = async () => {
       try {
-        console.log('🔍 useAuth: Début getSession');
-        console.log('🔍 useAuth: isSupabaseConfigured =', isSupabaseConfigured);
-        console.log('🔍 useAuth: VITE_SUPABASE_URL =', import.meta.env.VITE_SUPABASE_URL);
-        console.log('🔍 useAuth: VITE_SUPABASE_ANON_KEY =', import.meta.env.VITE_SUPABASE_ANON_KEY);
-        
-        if (!isSupabaseConfigured) {
-          console.log('⚠️ useAuth: Supabase non configuré, arrêt du chargement');
-          // En dev sans config, ne pas tenter d'appel réseau
-          setLoading(false);
-          return;
-        }
-        
-        console.log('🔍 useAuth: Tentative de récupération de session...');
+        setLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
-        console.log('✅ useAuth: Session récupérée:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Créer le profil utilisateur s'il n'existe pas
         if (session?.user) {
           await ensureUserProfile(session.user);
         }
       } catch (error) {
-        console.error('❌ useAuth: Erreur lors de la récupération de la session:', error);
-        toast({
-          title: "Erreur d'authentification",
-          description: "Impossible de récupérer la session utilisateur",
-          variant: "destructive",
-        });
+        console.error('Erreur session:', error);
       } finally {
-        console.log('🏁 useAuth: Fin getSession, loading = false');
         setLoading(false);
       }
     };
 
     getSession();
 
-    // Timeout de sécurité pour éviter le blocage infini
-    const timeoutId = setTimeout(() => {
-      console.log('⏰ useAuth: Timeout de sécurité, forcing loading = false');
-      setLoading(false);
-    }, 5000);
-
-    // Écouter les changements d'authentification
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 useAuth: Auth state changed:', event, session?.user?.email);
-      
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
 
       if (event === 'SIGNED_IN' && session?.user) {
         await ensureUserProfile(session.user);
-        toast({
-          title: "Connexion réussie",
-          description: `Bienvenue ${session.user.user_metadata?.first_name || session.user.email}!`,
-        });
       } else if (event === 'SIGNED_OUT') {
-        toast({
-          title: "Déconnexion",
-          description: "Vous avez été déconnecté avec succès",
-        });
+        setUser(null);
+        setSession(null);
       }
     });
 
     return () => {
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -118,10 +80,6 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Configuration Supabase manquante. Ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local");
-      }
-      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -144,19 +102,12 @@ export const useAuth = () => {
 
       return { data, error: null };
     } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error);
       return { data: null, error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Configuration Supabase manquante. Ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local");
-      }
-      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -165,27 +116,17 @@ export const useAuth = () => {
       if (error) throw error;
       return { data, error: null };
     } catch (error: any) {
-      console.error('Erreur lors de la connexion:', error);
       return { data: null, error };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Configuration Supabase manquante. Ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local");
-      }
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       return { error: null };
     } catch (error: any) {
-      console.error('Erreur lors de la déconnexion:', error);
       return { error };
-    } finally {
-      setLoading(false);
     }
   };
 

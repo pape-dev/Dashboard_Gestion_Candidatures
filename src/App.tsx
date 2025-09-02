@@ -44,17 +44,11 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   const { user, loading } = useAuth();
   
-  useEffect(() => {
-    // Log pour debugging
-    console.log('🔍 AppContent: App mounted, user:', user?.email, 'loading:', loading);
-  }, [user, loading]);
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-blue-950/30 dark:to-indigo-950/50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">JobTracker Pro</h2>
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
           <p className="text-slate-600 dark:text-slate-400">Chargement...</p>
         </div>
       </div>
@@ -63,11 +57,9 @@ const AppContent = () => {
   
   return (
     <Routes>
-      {/* Routes publiques */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       
-      {/* Redirection par défaut vers login si non connecté */}
       <Route path="/" element={
         user ? (
           <AppProvider>
@@ -78,7 +70,6 @@ const AppContent = () => {
         )
       } />
       
-      {/* Routes protégées */}
       <Route path="/applications" element={
         <ProtectedRoute>
           <AppProvider>
@@ -136,7 +127,6 @@ const AppContent = () => {
         </ProtectedRoute>
       } />
       
-      {/* Route 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

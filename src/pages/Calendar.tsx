@@ -33,10 +33,6 @@ const Calendar = () => {
   } = useAppContext();
   const { toast } = useToast();
   
-  useEffect(() => {
-    // refreshData(); // Removed as per edit hint
-  }, []);
-  
   const filteredInterviews = interviews.filter(interview => {
     const matchesSearch = interview.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          interview.position.toLowerCase().includes(searchTerm.toLowerCase()) ||

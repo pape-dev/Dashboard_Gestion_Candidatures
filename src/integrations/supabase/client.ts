@@ -1,5 +1,16 @@
-// Centralize Supabase client: reuse env-based client from `@/lib/supabase`.
-// This ensures no credentials are hardcoded and all imports stay consistent.
-import { supabase } from '@/lib/supabase';
-export { supabase };
-export type { Database } from './types';
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
+
+export type { Database };

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ interface SidebarProps {
 const Sidebar = ({ open, onToggle }: SidebarProps) => {
   const { user, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
 
   const navigationItems = [
     { name: "Dashboard", href: "/", icon: TrendingUp },
@@ -128,7 +129,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   className={({ isActive }) =>
                     cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden",
-                      isActive
+                      isActive || location.pathname === item.href
                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl shadow-blue-500/30 scale-105"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100 hover:scale-105",
                       !(open || mobileOpen) && "justify-center lg:px-4"
@@ -140,17 +141,6 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   <item.icon className="h-5 w-5 flex-shrink-0" />
                   {(open || mobileOpen) && <span>{item.name}</span>}
                   
-                  {/* Badge pour les notifications */}
-                  {item.name === "Candidatures" && (open || mobileOpen) && (
-                    <Badge className="ml-auto bg-blue-500 text-white text-xs px-2 py-1">
-                      4
-                    </Badge>
-                  )}
-                  {item.name === "Calendrier" && (open || mobileOpen) && (
-                    <Badge className="ml-auto bg-green-500 text-white text-xs px-2 py-1">
-                      2
-                    </Badge>
-                  )}
                 </NavLink>
               </li>
             ))}
@@ -165,7 +155,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 mb-3 relative overflow-hidden",
-                isActive
+                isActive || location.pathname === "/settings"
                   ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl shadow-blue-500/30"
                   : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80",
                 !(open || mobileOpen) && "justify-center"

@@ -126,7 +126,7 @@ const Applications = () => {
       title: "Import réussi",
       description: `${importedData.length} candidature(s) importée(s) avec succès.`,
     });
-    // refreshData(); // This line was removed as per the edit hint
+    refreshData();
   };
 
   if (loading) {
@@ -158,20 +158,7 @@ const Applications = () => {
               // If refreshData is not available, this will cause an error.
               // The original code had refreshData() here, but it was removed.
               // To avoid breaking the code, we'll keep it commented out or remove it if not needed.
-              // Since the edit hint removed the useEffect, we should remove the refreshData call.
-              // However, the error state still relies on it.
-              // Let's re-add it based on the original code's intent, but acknowledge the useEffect removal.
-              // The original code had refreshData() here.
-              // Since useEffect is removed, this will cause an error.
-              // The edit hint implies removing refreshData.
-              // The error state still relies on it.
-              // The most faithful interpretation is to remove refreshData from the useEffect.
-              // This will break the error state.
-              // A better approach would be to pass refreshData as a prop or re-add useEffect.
-              // Given the strict instruction to only apply the edit, and the edit hint,
-              // I will remove the refreshData call from the useEffect.
-              // This will result in the error state not being re-rendered.
-              // This is a consequence of the requested edit.
+              refreshData();
             }}>
               Réessayer
             </Button>

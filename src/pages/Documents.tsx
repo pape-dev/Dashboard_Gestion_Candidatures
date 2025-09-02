@@ -54,7 +54,6 @@ const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingDoc, setEditingDoc] = useState<any>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm<DocumentFormData>({
@@ -98,14 +97,66 @@ const Documents = () => {
     }
   };
 
+  const createBucketIfNotExists = async (bucketName: string) => {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+      
+      if (!bucketExists) {
+        const { error } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+          fileSizeLimit: 10485760 // 10MB
+        });
+        
+        if (error) {
+          console.error('Erreur création bucket:', error);
+          // Si le bucket existe déjà, ce n'est pas une erreur
+          if (!error.message.includes('already exists')) {
+            throw error;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erreur vérification bucket:', error);
+    }
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validation du fichier
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/webp', 
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+
+      if (file.size > maxSize) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La taille maximum autorisée est de 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Type de fichier non autorisé",
+          description: "Formats acceptés: PDF, DOC, DOCX, JPG, PNG, WebP",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setSelectedFile(file);
       form.setValue('name', file.name);
       
       // Déterminer le type automatiquement
-      if (file.name.toLowerCase().includes('cv')) {
+      if (file.name.toLowerCase().includes('cv') || file.type === 'application/pdf') {
         form.setValue('type', 'cv');
       } else if (file.type.startsWith('image/')) {
         form.setValue('type', 'portfolio');
@@ -128,15 +179,24 @@ const Documents = () => {
     try {
       setUploading(true);
 
+      // Créer le bucket s'il n'existe pas
+      await createBucketIfNotExists('documents');
+
       // Upload du fichier
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(fileName, selectedFile);
+        .upload(fileName, selectedFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Erreur upload:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('documents')
@@ -169,11 +229,19 @@ const Documents = () => {
         title: "Document ajouté",
         description: "Le document a été téléchargé avec succès",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de l\'upload:', error);
+      
+      let errorMessage = "Impossible de télécharger le document";
+      if (error.message?.includes('Bucket not found')) {
+        errorMessage = "Erreur de configuration du stockage. Contactez l'administrateur.";
+      } else if (error.message?.includes('The resource already exists')) {
+        errorMessage = "Un fichier avec ce nom existe déjà";
+      }
+      
       toast({
         title: "Erreur",
-        description: "Impossible de télécharger le document",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -187,10 +255,13 @@ const Documents = () => {
       if (!doc) return;
 
       // Supprimer le fichier du storage
-      const fileName = doc.file_url.split('/').pop();
+      const urlParts = doc.file_url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `${user?.id}/${fileName}`;
+      
       await supabase.storage
         .from('documents')
-        .remove([`${user.id}/${fileName}`]);
+        .remove([filePath]);
 
       // Supprimer les métadonnées
       const { error } = await supabase
@@ -259,7 +330,7 @@ const Documents = () => {
     switch (type) {
       case 'cv': return FileText;
       case 'portfolio': return Eye;
-      case 'certificate': return Award;
+      case 'certificate': return Calendar;
       default: return File;
     }
   };
@@ -267,14 +338,12 @@ const Documents = () => {
   if (loading) {
     return (
       <Layout>
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-              <p className="text-lg font-medium">Chargement...</p>
-            </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-lg font-medium">Chargement des documents...</p>
           </div>
-        )}
+        </div>
       </Layout>
     );
   }
@@ -308,7 +377,7 @@ const Documents = () => {
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
                   />
                   <p className="text-sm text-gray-500">
-                    Formats acceptés: PDF, DOC, DOCX, JPG, PNG, WebP
+                    Formats acceptés: PDF, DOC, DOCX, JPG, PNG, WebP (max 10MB)
                   </p>
                 </div>
 
@@ -366,7 +435,11 @@ const Documents = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setSelectedFile(null);
+                      form.reset();
+                    }}
                   >
                     Annuler
                   </Button>
