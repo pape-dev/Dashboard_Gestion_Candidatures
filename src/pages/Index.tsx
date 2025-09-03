@@ -18,15 +18,11 @@ import DashboardInsights from "@/components/DashboardInsights";
 import WeeklyActivity from "@/components/WeeklyActivity";
 import { useAppContext } from "@/contexts/AppContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
 
 const Index = () => {
   const { applications, interviews, tasks, getStatistics, loading } = useAppContext();
   const { user } = useAuth();
   const stats = getStatistics();
-  
-  console.log('🔍 Index: Rendu avec applications:', applications?.length, 'interviews:', interviews?.length, 'tasks:', tasks?.length);
-  console.log('🔍 Index: Stats calculées:', stats);
   
   // Loading state
   if (loading) {

@@ -1,25 +1,31 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     const getSession = async () => {
       try {
-        setLoading(true);
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await ensureUserProfile(session.user);
+        if (error) {
+          console.error('Erreur session:', error);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await ensureUserProfile(session.user);
+          }
         }
       } catch (error) {
         console.error('Erreur session:', error);
@@ -50,6 +56,8 @@ export const useAuth = () => {
   }, []);
 
   const ensureUserProfile = async (user: User) => {
+    if (!isSupabaseConfigured) return;
+
     try {
       const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
@@ -58,7 +66,6 @@ export const useAuth = () => {
         .single();
 
       if (fetchError && fetchError.code === 'PGRST116') {
-        // Profil n'existe pas, le créer
         const { error: insertError } = await supabase
           .from('user_profiles')
           .insert({
@@ -79,6 +86,10 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+    if (!isSupabaseConfigured) {
+      return { data: null, error: new Error("Configuration Supabase manquante") };
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -107,6 +118,10 @@ export const useAuth = () => {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      return { data: null, error: new Error("Configuration Supabase manquante") };
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -121,6 +136,10 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    if (!isSupabaseConfigured) {
+      return { error: new Error("Configuration Supabase manquante") };
+    }
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -131,10 +150,11 @@ export const useAuth = () => {
   };
 
   const resetPassword = async (email: string) => {
+    if (!isSupabaseConfigured) {
+      return { data: null, error: new Error("Configuration Supabase manquante") };
+    }
+
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Configuration Supabase manquante. Ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local");
-      }
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -154,10 +174,11 @@ export const useAuth = () => {
   };
 
   const updateProfile = async (updates: { first_name?: string; last_name?: string; avatar_url?: string }) => {
+    if (!isSupabaseConfigured) {
+      return { data: null, error: new Error("Configuration Supabase manquante") };
+    }
+
     try {
-      if (!isSupabaseConfigured) {
-        throw new Error("Configuration Supabase manquante. Ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local");
-      }
       const { data, error } = await supabase.auth.updateUser({
         data: updates
       });

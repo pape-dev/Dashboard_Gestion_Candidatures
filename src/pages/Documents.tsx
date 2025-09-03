@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   FileText, Upload, Download, Eye, Share2, 
-  Plus, Search, Filter, MoreHorizontal, 
+  Plus, Search, MoreHorizontal, 
   Edit, Trash2, Copy, Calendar, File, Loader2
 } from "lucide-react";
 import {
@@ -31,7 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,13 +67,15 @@ const Documents = () => {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && isSupabaseConfigured) {
       loadDocuments();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
   const loadDocuments = async () => {
-    if (!user) return;
+    if (!user || !isSupabaseConfigured) return;
 
     try {
       setLoading(true);
@@ -83,21 +85,23 @@ const Documents = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setDocuments(data || []);
+      if (error) {
+        console.error('Erreur chargement documents:', error);
+        setDocuments([]);
+      } else {
+        setDocuments(data || []);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les documents",
-        variant: "destructive",
-      });
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const createBucketIfNotExists = async (bucketName: string) => {
+  const ensureBucketExists = async (bucketName: string) => {
+    if (!isSupabaseConfigured) return false;
+
     try {
       const { data: buckets } = await supabase.storage.listBuckets();
       const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
@@ -105,27 +109,30 @@ const Documents = () => {
       if (!bucketExists) {
         const { error } = await supabase.storage.createBucket(bucketName, {
           public: true,
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+          allowedMimeTypes: [
+            'image/jpeg', 'image/png', 'image/webp', 
+            'application/pdf', 
+            'application/msword', 
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          ],
           fileSizeLimit: 10485760 // 10MB
         });
         
-        if (error) {
+        if (error && !error.message.includes('already exists')) {
           console.error('Erreur création bucket:', error);
-          // Si le bucket existe déjà, ce n'est pas une erreur
-          if (!error.message.includes('already exists')) {
-            throw error;
-          }
+          return false;
         }
       }
+      return true;
     } catch (error) {
       console.error('Erreur vérification bucket:', error);
+      return false;
     }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validation du fichier
       const maxSize = 10 * 1024 * 1024; // 10MB
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/webp', 
@@ -153,9 +160,8 @@ const Documents = () => {
       }
 
       setSelectedFile(file);
-      form.setValue('name', file.name);
+      form.setValue('name', file.name.replace(/\.[^/.]+$/, ""));
       
-      // Déterminer le type automatiquement
       if (file.name.toLowerCase().includes('cv') || file.type === 'application/pdf') {
         form.setValue('type', 'cv');
       } else if (file.type.startsWith('image/')) {
@@ -167,10 +173,10 @@ const Documents = () => {
   };
 
   const handleSubmit = async (data: DocumentFormData) => {
-    if (!user || !selectedFile) {
+    if (!user || !selectedFile || !isSupabaseConfigured) {
       toast({
-        title: "Fichier manquant",
-        description: "Veuillez sélectionner un fichier",
+        title: "Erreur",
+        description: "Fichier manquant ou configuration invalide",
         variant: "destructive",
       });
       return;
@@ -179,12 +185,15 @@ const Documents = () => {
     try {
       setUploading(true);
 
-      // Créer le bucket s'il n'existe pas
-      await createBucketIfNotExists('documents');
+      // Vérifier/créer le bucket
+      const bucketReady = await ensureBucketExists('documents');
+      if (!bucketReady) {
+        throw new Error('Impossible de préparer le stockage');
+      }
 
       // Upload du fichier
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
@@ -234,13 +243,15 @@ const Documents = () => {
       
       let errorMessage = "Impossible de télécharger le document";
       if (error.message?.includes('Bucket not found')) {
-        errorMessage = "Erreur de configuration du stockage. Contactez l'administrateur.";
-      } else if (error.message?.includes('The resource already exists')) {
+        errorMessage = "Erreur de configuration du stockage";
+      } else if (error.message?.includes('already exists')) {
         errorMessage = "Un fichier avec ce nom existe déjà";
+      } else if (error.message?.includes('File size')) {
+        errorMessage = "Fichier trop volumineux";
       }
       
       toast({
-        title: "Erreur",
+        title: "Erreur d'upload",
         description: errorMessage,
         variant: "destructive",
       });
@@ -250,18 +261,22 @@ const Documents = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isSupabaseConfigured) return;
+
     try {
       const doc = documents.find(d => d.id === id);
       if (!doc) return;
 
       // Supprimer le fichier du storage
-      const urlParts = doc.file_url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${user?.id}/${fileName}`;
-      
-      await supabase.storage
-        .from('documents')
-        .remove([filePath]);
+      if (doc.file_url) {
+        const urlParts = doc.file_url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const filePath = `${user?.id}/${fileName}`;
+        
+        await supabase.storage
+          .from('documents')
+          .remove([filePath]);
+      }
 
       // Supprimer les métadonnées
       const { error } = await supabase
@@ -288,26 +303,30 @@ const Documents = () => {
   };
 
   const handleDownload = (doc: any) => {
-    window.open(doc.file_url, '_blank');
-    toast({
-      title: "Téléchargement",
-      description: `Téléchargement de ${doc.name}`,
-    });
+    if (doc.file_url) {
+      window.open(doc.file_url, '_blank');
+      toast({
+        title: "Téléchargement",
+        description: `Téléchargement de ${doc.name}`,
+      });
+    }
   };
 
   const handleShare = async (doc: any) => {
-    try {
-      await navigator.clipboard.writeText(doc.file_url);
-      toast({
-        title: "Lien copié",
-        description: "Le lien de partage a été copié",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de copier le lien",
-        variant: "destructive",
-      });
+    if (doc.file_url) {
+      try {
+        await navigator.clipboard.writeText(doc.file_url);
+        toast({
+          title: "Lien copié",
+          description: "Le lien de partage a été copié",
+        });
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de copier le lien",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -334,6 +353,27 @@ const Documents = () => {
       default: return File;
     }
   };
+
+  if (!isSupabaseConfigured) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-12">
+          <Card className="max-w-md">
+            <CardContent className="p-8 text-center">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Configuration requise</h3>
+              <p className="text-gray-600 mb-4">
+                Veuillez configurer Supabase pour utiliser la gestion de documents.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Actualiser
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   if (loading) {
     return (

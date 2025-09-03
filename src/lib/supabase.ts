@@ -4,16 +4,26 @@ import type { Database } from '@/integrations/supabase/types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'JobTracker-Pro@1.0.0',
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Variables d\'environnement Supabase manquantes');
+}
+
+export const supabase = createClient<Database>(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
     },
-  },
-});
+    global: {
+      headers: {
+        'X-Client-Info': 'JobTracker-Pro@1.0.0',
+      },
+    },
+  }
+);
+
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);

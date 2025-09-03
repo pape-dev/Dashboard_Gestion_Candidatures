@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
 import Index from "./pages/Index";
 import Applications from "./pages/Applications";
 import Calendar from "./pages/Calendar";
@@ -24,10 +22,9 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: (failureCount, error: any) => {
-        // Ne pas retry sur les erreurs d'authentification
         if (error?.status === 401 || error?.status === 403) {
           return false;
         }
@@ -48,8 +45,9 @@ const AppContent = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-950 dark:via-blue-950/30 dark:to-indigo-950/50 flex items-center justify-center">
         <div className="text-center">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
-          <p className="text-slate-600 dark:text-slate-400">Chargement...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
+          <p className="text-slate-600 dark:text-slate-400">Initialisation de l'application...</p>
         </div>
       </div>
     );
@@ -77,6 +75,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/calendar" element={
         <ProtectedRoute>
           <AppProvider>
@@ -84,6 +83,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/contacts" element={
         <ProtectedRoute>
           <AppProvider>
@@ -91,6 +91,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/job-search" element={
         <ProtectedRoute>
           <AppProvider>
@@ -98,6 +99,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/profile" element={
         <ProtectedRoute>
           <AppProvider>
@@ -105,6 +107,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/tasks" element={
         <ProtectedRoute>
           <AppProvider>
@@ -112,6 +115,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/documents" element={
         <ProtectedRoute>
           <AppProvider>
@@ -119,6 +123,7 @@ const AppContent = () => {
           </AppProvider>
         </ProtectedRoute>
       } />
+      
       <Route path="/settings" element={
         <ProtectedRoute>
           <AppProvider>
@@ -131,6 +136,7 @@ const AppContent = () => {
     </Routes>
   );
 };
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

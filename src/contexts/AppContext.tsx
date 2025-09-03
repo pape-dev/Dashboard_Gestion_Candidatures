@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
-import { handleSupabaseError } from '@/lib/security';
 
 export interface Application {
   id: string;
@@ -79,7 +78,6 @@ export interface Contact {
 }
 
 interface AppContextType {
-  // Data
   applications: Application[];
   interviews: Interview[];
   tasks: Task[];
@@ -87,28 +85,23 @@ interface AppContextType {
   loading: boolean;
   error: string | null;
   
-  // Actions for Applications
   addApplication: (application: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateApplication: (id: string, updates: Partial<Application>) => Promise<void>;
   deleteApplication: (id: string) => Promise<void>;
   
-  // Actions for Interviews
   addInterview: (interview: Omit<Interview, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateInterview: (id: string, updates: Partial<Interview>) => Promise<void>;
   deleteInterview: (id: string) => Promise<void>;
   
-  // Actions for Tasks
   addTask: (task: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   toggleTaskStatus: (id: string) => Promise<void>;
   
-  // Actions for Contacts
   addContact: (contact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateContact: (id: string, updates: Partial<Contact>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
   
-  // Statistics & Analytics
   getStatistics: () => {
     totalApplications: number;
     activeApplications: number;
@@ -118,7 +111,6 @@ interface AppContextType {
     completedTasks: number;
   };
 
-  // Data refresh
   refreshData: () => Promise<void>;
 }
 
@@ -134,21 +126,18 @@ export const useAppContext = () => {
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State management
   const [applications, setApplications] = useState<Application[]>([]);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
-  // Load data on mount and user change
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && isSupabaseConfigured) {
       loadUserData();
     } else {
-      // Clear data when not authenticated
       setApplications([]);
       setInterviews([]);
       setTasks([]);
@@ -158,7 +147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isAuthenticated, user]);
 
   const loadUserData = async () => {
-    if (!user) return;
+    if (!user || !isSupabaseConfigured) return;
 
     try {
       setLoading(true);
@@ -171,10 +160,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchContacts()
       ]);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du chargement des données:', error);
       setError('Impossible de charger vos données');
-      handleSupabaseError(error, 'Chargement des données');
     } finally {
       setLoading(false);
     }
@@ -183,62 +171,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const fetchApplications = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    setApplications(data || []);
+      if (error) throw error;
+      setApplications(data || []);
+    } catch (error) {
+      console.error('Erreur applications:', error);
+      setApplications([]);
+    }
   };
 
   const fetchInterviews = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('interviews')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('interview_date', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('interviews')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('interview_date', { ascending: true });
 
-    if (error) throw error;
-    setInterviews(data || []);
+      if (error) throw error;
+      setInterviews(data || []);
+    } catch (error) {
+      console.error('Erreur interviews:', error);
+      setInterviews([]);
+    }
   };
 
   const fetchTasks = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    setTasks(data || []);
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (error) {
+      console.error('Erreur tasks:', error);
+      setTasks([]);
+    }
   };
 
   const fetchContacts = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    setContacts(data || []);
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error) {
+      console.error('Erreur contacts:', error);
+      setContacts([]);
+    }
   };
 
   const refreshData = async () => {
     await loadUserData();
   };
 
-  // Application actions
   const addApplication = useCallback(async (newApplication: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
 
     try {
       const { data, error } = await supabase
@@ -255,13 +262,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Candidature ajoutée",
         description: `Candidature pour ${newApplication.position} chez ${newApplication.company} ajoutée avec succès`,
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Ajout candidature');
+    } catch (error: any) {
+      console.error('Erreur ajout application:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la candidature",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [user]);
 
   const updateApplication = useCallback(async (id: string, updates: Partial<Application>) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const { data, error } = await supabase
         .from('applications')
@@ -278,13 +292,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Candidature mise à jour",
         description: "Les modifications ont été sauvegardées",
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Mise à jour candidature');
+    } catch (error: any) {
+      console.error('Erreur update application:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la candidature",
+        variant: "destructive",
+      });
       throw error;
     }
   }, []);
 
   const deleteApplication = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const application = applications.find(app => app.id === id);
       
@@ -305,15 +326,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           description: `La candidature pour ${application.position} chez ${application.company} a été supprimée`,
         });
       }
-    } catch (error) {
-      handleSupabaseError(error, 'Suppression candidature');
+    } catch (error: any) {
+      console.error('Erreur delete application:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la candidature",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [applications]);
 
-  // Interview actions
   const addInterview = useCallback(async (newInterview: Omit<Interview, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
 
     try {
       const { data, error } = await supabase
@@ -330,13 +355,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Entretien planifié",
         description: `Entretien avec ${newInterview.company} ajouté au calendrier`,
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Ajout entretien');
+    } catch (error: any) {
+      console.error('Erreur ajout interview:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter l'entretien",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [user]);
 
   const updateInterview = useCallback(async (id: string, updates: Partial<Interview>) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const { data, error } = await supabase
         .from('interviews')
@@ -353,13 +385,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Entretien mis à jour",
         description: "Les modifications ont été sauvegardées",
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Mise à jour entretien');
+    } catch (error: any) {
+      console.error('Erreur update interview:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'entretien",
+        variant: "destructive",
+      });
       throw error;
     }
   }, []);
 
   const deleteInterview = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const interview = interviews.find(i => i.id === id);
       
@@ -378,15 +417,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           description: `L'entretien avec ${interview.company} a été supprimé`,
         });
       }
-    } catch (error) {
-      handleSupabaseError(error, 'Suppression entretien');
+    } catch (error: any) {
+      console.error('Erreur delete interview:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'entretien",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [interviews]);
 
-  // Task actions
   const addTask = useCallback(async (newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
 
     try {
       const { data, error } = await supabase
@@ -403,13 +446,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Tâche créée",
         description: `Nouvelle tâche "${newTask.title}" ajoutée`,
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Ajout tâche');
+    } catch (error: any) {
+      console.error('Erreur ajout task:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter la tâche",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [user]);
 
   const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -426,13 +476,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Tâche mise à jour",
         description: "Les modifications ont été sauvegardées",
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Mise à jour tâche');
+    } catch (error: any) {
+      console.error('Erreur update task:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la tâche",
+        variant: "destructive",
+      });
       throw error;
     }
   }, []);
 
   const deleteTask = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const task = tasks.find(t => t.id === id);
       
@@ -451,13 +508,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           description: `La tâche "${task.title}" a été supprimée`,
         });
       }
-    } catch (error) {
-      handleSupabaseError(error, 'Suppression tâche');
+    } catch (error: any) {
+      console.error('Erreur delete task:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la tâche",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [tasks]);
 
   const toggleTaskStatus = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const task = tasks.find(t => t.id === id);
       if (!task) return;
@@ -484,15 +548,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: newCompleted ? "Tâche terminée" : "Tâche réactivée",
         description: `"${task.title}" ${newCompleted ? 'marquée comme terminée' : 'remise en cours'}`,
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Changement statut tâche');
+    } catch (error: any) {
+      console.error('Erreur toggle task:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de changer le statut de la tâche",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [tasks]);
 
-  // Contact actions
   const addContact = useCallback(async (newContact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
 
     try {
       const { data, error } = await supabase
@@ -509,13 +577,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Contact ajouté",
         description: `${newContact.name} ajouté à vos contacts`,
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Ajout contact');
+    } catch (error: any) {
+      console.error('Erreur ajout contact:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le contact",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [user]);
 
   const updateContact = useCallback(async (id: string, updates: Partial<Contact>) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const { data, error } = await supabase
         .from('contacts')
@@ -532,13 +607,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: "Contact mis à jour",
         description: "Les modifications ont été sauvegardées",
       });
-    } catch (error) {
-      handleSupabaseError(error, 'Mise à jour contact');
+    } catch (error: any) {
+      console.error('Erreur update contact:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le contact",
+        variant: "destructive",
+      });
       throw error;
     }
   }, []);
 
   const deleteContact = useCallback(async (id: string) => {
+    if (!isSupabaseConfigured) throw new Error('Supabase not configured');
+
     try {
       const contact = contacts.find(c => c.id === id);
       
@@ -557,13 +639,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           description: `${contact.name} a été supprimé de vos contacts`,
         });
       }
-    } catch (error) {
-      handleSupabaseError(error, 'Suppression contact');
+    } catch (error: any) {
+      console.error('Erreur delete contact:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le contact",
+        variant: "destructive",
+      });
       throw error;
     }
   }, [contacts]);
 
-  // Statistics
   const getStatistics = useCallback(() => {
     const totalApplications = applications.length;
     const activeApplications = applications.filter(app => 
@@ -573,7 +659,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ['confirmé', 'à confirmer'].includes(interview.status || '')
     ).length;
     const responseRate = totalApplications > 0 
-      ? Math.round((applications.filter(app => app.status !== 'En attente' && app.status !== null).length / totalApplications) * 100)
+      ? Math.round((applications.filter(app => app.status !== 'En cours' && app.status !== null).length / totalApplications) * 100)
       : 0;
     const pendingTasks = tasks.filter(task => !task.completed).length;
     const completedTasks = tasks.filter(task => task.completed).length;
@@ -589,7 +675,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [applications, interviews, tasks]);
 
   const value: AppContextType = {
-    // Data
     applications,
     interviews,
     tasks,
@@ -597,7 +682,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loading,
     error,
     
-    // Actions
     addApplication,
     updateApplication,
     deleteApplication,
@@ -612,7 +696,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateContact,
     deleteContact,
     
-    // Utilities
     getStatistics,
     refreshData,
   };
