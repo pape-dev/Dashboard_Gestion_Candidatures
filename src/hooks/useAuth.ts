@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
@@ -31,6 +34,7 @@ export const useAuth = () => {
         console.error('Erreur session:', error);
       } finally {
         setLoading(false);
+        setInitialized(true);
       }
     };
 
@@ -48,12 +52,17 @@ export const useAuth = () => {
         setUser(null);
         setSession(null);
       }
+      
+      if (!initialized) {
+        setLoading(false);
+        setInitialized(true);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized, toast]);
 
   const ensureUserProfile = async (user: User) => {
     if (!isSupabaseConfigured) return;
@@ -141,6 +150,10 @@ export const useAuth = () => {
     }
 
     try {
+      // Nettoyer le state local avant la déconnexion
+      setUser(null);
+      setSession(null);
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       return { error: null };

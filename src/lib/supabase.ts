@@ -17,10 +17,19 @@ export const supabase = createClient<Database>(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: 'pkce',
     },
     global: {
       headers: {
         'X-Client-Info': 'JobTracker-Pro@1.0.0',
+      },
+    },
+    db: {
+      schema: 'public',
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 2,
       },
     },
   }

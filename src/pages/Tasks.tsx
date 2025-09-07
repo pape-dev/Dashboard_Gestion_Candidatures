@@ -23,12 +23,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const Tasks = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const { 
     tasks, 
     applications,
     loading, 
-    error: contextError,
+    error,
     updateTask, 
     deleteTask, 
     toggleTaskStatus
@@ -36,35 +35,6 @@ const Tasks = () => {
   const { toast } = useToast();
 
   console.log('🔍 Tasks: Rendu avec tasks:', tasks?.length, 'applications:', applications?.length, 'loading:', loading);
-
-  // Gestion d'erreur globale
-  useEffect(() => {
-    if (contextError) {
-      console.error('❌ Tasks: Erreur du contexte:', contextError);
-      setError(contextError);
-    }
-  }, [contextError]);
-
-  // Gestion d'erreur JavaScript
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      console.error('❌ Tasks: Erreur JavaScript capturée:', event.error);
-      setError(`Erreur JavaScript: ${event.error?.message || 'Erreur inconnue'}`);
-    };
-
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('❌ Tasks: Promise rejetée non gérée:', event.reason);
-      setError(`Erreur Promise: ${event.reason?.message || 'Erreur inconnue'}`);
-    };
-
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-
-    return () => {
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
-  }, []);
 
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -141,23 +111,6 @@ const Tasks = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Affichage des erreurs */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <h3 className="text-sm font-medium text-red-800">Erreur détectée</h3>
-            </div>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-sm text-red-600 hover:text-red-800 mt-2 underline"
-            >
-              Fermer
-            </button>
-          </div>
-        )}
-
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Tâches</h1>

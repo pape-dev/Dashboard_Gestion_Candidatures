@@ -126,7 +126,7 @@ const Applications = () => {
       title: "Import réussi",
       description: `${importedData.length} candidature(s) importée(s) avec succès.`,
     });
-    refreshData();
+    // Les données seront automatiquement rechargées par le contexte
   };
 
   if (loading) {
@@ -152,14 +152,7 @@ const Applications = () => {
             </div>
             <h3 className="text-lg font-semibold mb-2">Erreur de chargement</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => {
-              // Assuming refreshData is available in the context or passed as a prop
-              // For now, we'll just re-render to show the error state again
-              // If refreshData is not available, this will cause an error.
-              // The original code had refreshData() here, but it was removed.
-              // To avoid breaking the code, we'll keep it commented out or remove it if not needed.
-              refreshData();
-            }}>
+            <Button onClick={() => window.location.reload()}>
               Réessayer
             </Button>
           </div>

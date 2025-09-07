@@ -91,6 +91,7 @@ const InterviewForm = ({ children, interview, onSuccess }: InterviewFormProps) =
       
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      // L'erreur est déjà gérée dans le contexte
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Application {
   id: string;
@@ -126,8 +126,10 @@ export const useAppContext = () => {
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -135,16 +137,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
-    if (isAuthenticated && user && isSupabaseConfigured) {
+    if (isAuthenticated && user && isSupabaseConfigured && !dataLoaded) {
       loadUserData();
-    } else {
+    } else if (!isAuthenticated || !user) {
       setApplications([]);
       setInterviews([]);
       setTasks([]);
       setContacts([]);
+      setDataLoaded(false);
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, dataLoaded]);
 
   const loadUserData = async () => {
     if (!user || !isSupabaseConfigured) return;
@@ -160,9 +163,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchContacts()
       ]);
       
+      setDataLoaded(true);
     } catch (error: any) {
       console.error('Erreur lors du chargement des données:', error);
-      setError('Impossible de charger vos données');
+      setError(null); // Ne pas afficher l'erreur, juste logger
     } finally {
       setLoading(false);
     }
@@ -178,11 +182,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur applications:', error);
+        return;
+      }
       setApplications(data || []);
     } catch (error) {
       console.error('Erreur applications:', error);
-      setApplications([]);
     }
   };
 
@@ -196,11 +202,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('user_id', user.id)
         .order('interview_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur interviews:', error);
+        return;
+      }
       setInterviews(data || []);
     } catch (error) {
       console.error('Erreur interviews:', error);
-      setInterviews([]);
     }
   };
 
@@ -214,11 +222,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur tasks:', error);
+        return;
+      }
       setTasks(data || []);
     } catch (error) {
       console.error('Erreur tasks:', error);
-      setTasks([]);
     }
   };
 
@@ -232,17 +242,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erreur contacts:', error);
+        return;
+      }
       setContacts(data || []);
     } catch (error) {
       console.error('Erreur contacts:', error);
-      setContacts([]);
     }
   };
 
-  const refreshData = async () => {
-    await loadUserData();
+  const refreshData = useCallback(async () => {
+    if (!user || !isSupabaseConfigured) return;
+    
+    try {
+      await Promise.all([
+        fetchApplications(),
+        fetchInterviews(),
+        fetchTasks(),
+        fetchContacts()
+      ]);
+    } catch (error) {
+      console.error('Erreur refresh:', error);
+    }
   };
+  }, [user]);
 
   const addApplication = useCallback(async (newApplication: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
@@ -269,7 +293,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible d'ajouter la candidature",
         variant: "destructive",
       });
-      throw error;
     }
   }, [user]);
 
@@ -299,9 +322,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de mettre à jour la candidature",
         variant: "destructive",
       });
-      throw error;
     }
-  }, []);
+  }, [toast]);
 
   const deleteApplication = useCallback(async (id: string) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -333,9 +355,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de supprimer la candidature",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [applications]);
+  }, [applications, toast]);
 
   const addInterview = useCallback(async (newInterview: Omit<Interview, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
@@ -362,9 +383,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible d'ajouter l'entretien",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [user]);
+  }, [user, toast]);
 
   const updateInterview = useCallback(async (id: string, updates: Partial<Interview>) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -392,9 +412,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de mettre à jour l'entretien",
         variant: "destructive",
       });
-      throw error;
     }
-  }, []);
+  }, [toast]);
 
   const deleteInterview = useCallback(async (id: string) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -424,9 +443,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de supprimer l'entretien",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [interviews]);
+  }, [interviews, toast]);
 
   const addTask = useCallback(async (newTask: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
@@ -453,9 +471,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible d'ajouter la tâche",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [user]);
+  }, [user, toast]);
 
   const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -483,9 +500,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de mettre à jour la tâche",
         variant: "destructive",
       });
-      throw error;
     }
-  }, []);
+  }, [toast]);
 
   const deleteTask = useCallback(async (id: string) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -515,9 +531,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de supprimer la tâche",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [tasks]);
+  }, [tasks, toast]);
 
   const toggleTaskStatus = useCallback(async (id: string) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -555,9 +570,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de changer le statut de la tâche",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [tasks]);
+  }, [tasks, toast]);
 
   const addContact = useCallback(async (newContact: Omit<Contact, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user || !isSupabaseConfigured) throw new Error('User not authenticated');
@@ -584,9 +598,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible d'ajouter le contact",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [user]);
+  }, [user, toast]);
 
   const updateContact = useCallback(async (id: string, updates: Partial<Contact>) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -614,9 +627,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de mettre à jour le contact",
         variant: "destructive",
       });
-      throw error;
     }
-  }, []);
+  }, [toast]);
 
   const deleteContact = useCallback(async (id: string) => {
     if (!isSupabaseConfigured) throw new Error('Supabase not configured');
@@ -646,9 +658,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: "Impossible de supprimer le contact",
         variant: "destructive",
       });
-      throw error;
     }
-  }, [contacts]);
+  }, [contacts, toast]);
 
   const getStatistics = useCallback(() => {
     const totalApplications = applications.length;

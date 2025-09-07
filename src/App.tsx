@@ -47,6 +47,7 @@ const AppContent = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
+          <p className="text-slate-600 dark:text-slate-400">Initialisation de votre session</p>
         </div>
       </div>
     );
@@ -59,9 +60,7 @@ const AppContent = () => {
       
       <Route path="/" element={
         user ? (
-          <AppProvider>
-            <Index />
-          </AppProvider>
+          <Index />
         ) : (
           <Navigate to="/login" replace />
         )
@@ -69,65 +68,49 @@ const AppContent = () => {
       
       <Route path="/applications" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Applications />
-          </AppProvider>
+          <Applications />
         </ProtectedRoute>
       } />
       
       <Route path="/calendar" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Calendar />
-          </AppProvider>
+          <Calendar />
         </ProtectedRoute>
       } />
       
       <Route path="/contacts" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Contacts />
-          </AppProvider>
+          <Contacts />
         </ProtectedRoute>
       } />
       
       <Route path="/job-search" element={
         <ProtectedRoute>
-          <AppProvider>
-            <JobSearch />
-          </AppProvider>
+          <JobSearch />
         </ProtectedRoute>
       } />
       
       <Route path="/profile" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Profile />
-          </AppProvider>
+          <Profile />
         </ProtectedRoute>
       } />
       
       <Route path="/tasks" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Tasks />
-          </AppProvider>
+          <Tasks />
         </ProtectedRoute>
       } />
       
       <Route path="/documents" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Documents />
-          </AppProvider>
+          <Documents />
         </ProtectedRoute>
       } />
       
       <Route path="/settings" element={
         <ProtectedRoute>
-          <AppProvider>
-            <Settings />
-          </AppProvider>
+          <Settings />
         </ProtectedRoute>
       } />
       
@@ -138,13 +121,15 @@ const AppContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
+    <AppProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AppProvider>
   </QueryClientProvider>
 );
 

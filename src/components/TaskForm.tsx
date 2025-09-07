@@ -83,8 +83,7 @@ const TaskForm = ({ children, task, onSuccess }: TaskFormProps) => {
       
     } catch (error) {
       console.error('❌ TaskForm: Erreur lors de la sauvegarde:', error);
-      // Afficher l'erreur à l'utilisateur
-      alert(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      // L'erreur est déjà gérée dans le contexte
     } finally {
       setLoading(false);
     }
