@@ -54,6 +54,8 @@ const InterviewActions = ({
         description: "Pas de lien de réunion configuré",
         variant: "destructive",
       });
+      // L'erreur est déjà gérée dans le contexte
+      // L'erreur est déjà gérée dans le contexte
     }
   };
 

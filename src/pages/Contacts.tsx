@@ -45,6 +45,7 @@ const Contacts = () => {
       await deleteContact(contactId);
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
+      // L'erreur est déjà gérée dans le contexte
     }
   };
 

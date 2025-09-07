@@ -112,6 +112,7 @@ const Calendar = () => {
       await deleteInterview(id);
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
+      // L'erreur est déjà gérée dans le contexte
     }
   };
 
@@ -120,6 +121,7 @@ const Calendar = () => {
       await updateInterview(id, { status });
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
+      // L'erreur est déjà gérée dans le contexte
     }
   };
 
