@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -94,7 +92,7 @@ export const useAuth = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
     if (!isSupabaseConfigured) {
       return { data: null, error: new Error("Configuration Supabase manquante") };
     }
@@ -105,20 +103,14 @@ export const useAuth = () => {
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: firstName || '',
+            last_name: lastName || '',
           },
         },
       });
 
       if (error) throw error;
 
-      if (data.user && !data.session) {
-        toast({
-          title: "Vérification requise",
-          description: "Veuillez vérifier votre email pour activer votre compte",
-        });
-      }
 
       return { data, error: null };
     } catch (error: any) {
@@ -174,10 +166,6 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Email envoyé",
-        description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe",
-      });
 
       return { data, error: null };
     } catch (error: any) {

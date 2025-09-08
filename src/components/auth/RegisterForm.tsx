@@ -62,7 +62,7 @@ const RegisterForm = () => {
       } else {
         toast({
           title: "Compte créé avec succès",
-          description: "Bienvenue ! Votre compte a été créé avec succès.",
+          description: "Bienvenue dans JobTracker Pro !",
         });
         navigate('/');
       }

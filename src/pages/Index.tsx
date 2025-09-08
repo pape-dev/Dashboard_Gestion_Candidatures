@@ -20,7 +20,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const { applications, interviews, tasks, getStatistics, loading } = useAppContext();
+  const { applications, interviews, tasks, getStatistics, loading, error } = useAppContext();
   const { user } = useAuth();
   const stats = getStatistics();
   
@@ -33,6 +33,26 @@ const Index = () => {
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Chargement...</h2>
             <p className="text-slate-600 dark:text-slate-400">Préparation de vos données...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900 w-fit mx-auto mb-6">
+              <Activity className="h-12 w-12 text-red-600 dark:text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Erreur de chargement</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Réessayer
+            </Button>
           </div>
         </div>
       </Layout>

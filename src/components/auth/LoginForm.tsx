@@ -45,7 +45,7 @@ const LoginForm = () => {
       } else {
         toast({
           title: "Connexion réussie",
-          description: "Bienvenue dans votre espace professionnel !",
+          description: "Bienvenue dans JobTracker Pro !",
         });
         navigate('/');
       }

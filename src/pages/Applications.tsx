@@ -35,6 +35,7 @@ const Applications = () => {
     applications, 
     loading, 
     error,
+    addApplication,
     updateApplication, 
     deleteApplication
   } = useAppContext();
